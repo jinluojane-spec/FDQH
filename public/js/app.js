@@ -243,7 +243,7 @@ async function loadQualityModules() {
   var data = await apiGet('/dashboard/quality-modules');
   if (!data || !data.modules) return;
 
-  var months = ['1月','2月','3月','4月','5月','6月','7月'];
+  var months = ['1月','2月','3月','4月','5月','6月','7月','8月'];
 
   // Render tabs
   var tabsHtml = data.modules.map(function(mod) {
@@ -273,7 +273,7 @@ async function loadQualityModules() {
       html += '<div class="module-section"><div class="module-section-title">' + sec.title + '</div>';
 
       if (sec.type === 'table') {
-        // 折叠无数据行 (collapsed: true) — 仅保留有7月数据的行
+        // 折叠无数据行 (collapsed: true) — 仅保留有8月数据的行
         var visibleRows = sec.rows.filter(function(r) { return !r.collapsed; });
         var collapsedRows = sec.rows.filter(function(r) { return r.collapsed; });
         
@@ -308,10 +308,10 @@ async function loadQualityModules() {
         visibleRows.forEach(function(row) { html += renderTableRow(row, false); });
         html += '</tbody></table>';
         
-        // 折叠区: 暂无7月数据的指标行
+        // 折叠区: 暂无8月数据的指标行
         if (collapsedRows.length) {
           html += '<details style="margin-top:6px;font-size:11px;">' +
-            '<summary style="cursor:pointer;color:var(--text-muted);padding:4px 2px;">📁 暂无7月数据指标 (' + collapsedRows.length + '项) — 点击展开</summary>' +
+            '<summary style="cursor:pointer;color:var(--text-muted);padding:4px 2px;">📁 暂无8月数据指标 (' + collapsedRows.length + '项) — 点击展开</summary>' +
             '<table class="mod-table" style="margin-top:6px;opacity:0.8;"><thead><tr>' + sec.headers.map(function(h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>';
           collapsedRows.forEach(function(row) { html += renderTableRow(row, false); });
           html += '</tbody></table></details>';
@@ -890,7 +890,7 @@ async function loadComplaintsDashboard() {
 
   // === Charts ===
   setTimeout(function() {
-    var months = ['1月','2月','3月','4月','5月','6月','7月'];
+    var months = ['1月','2月','3月','4月','5月','6月','7月','8月'];
     var monthData = months.map(function(m) { return data.byMonth[parseInt(m)] || 0; });
     renderChart('compMonthChart', 'bar', months, monthData, '投诉数', '#EF4444');
 
@@ -1092,7 +1092,7 @@ async function loadEventCategories() {
 
   // Render charts
   setTimeout(function() {
-    var months = ['1月','2月','3月','4月','5月','6月','7月'];
+    var months = ['1月','2月','3月','4月','5月','6月','7月','8月'];
     var monthData = months.map(function(m) { return cat.byMonth[parseInt(m)] || 0; });
     renderChart('ecMonth', 'bar', months, monthData, '件数', cat.color);
 

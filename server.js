@@ -19,6 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database
 const db = require('./database/init');
+const quality202608 = require('./database/quality-202608');
 
 // AI Service
 const aiService = require('./ai');
@@ -1943,6 +1944,7 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
     complaintCountYTD: 108,     // 1-7月客诉总计 108件
     complaintsByLine: { '发光': 38, '生化': 21, '微生物': 38, '荧光PCR': 10, 'POCT': 3 },
   };
+  Object.assign(BOWLING, quality202608.kpis);
 
   var kpis = {
     // 🔴 红线类 — 一票否决指标 (参照TQM指标确认.xlsx)
@@ -1955,7 +1957,7 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
     ],
     // 📊 经营类 — 稳定运行指标 (参照TQM: CAPA/客诉闭环/成品合格/EQA)
     operations: [
-      { name: 'CAPA按期关闭率', value: capas.length > 0 ? Math.round((closedCapas.length - overdueCapas.length) / Math.max(capas.length, 1) * 100) : 100, target: 95, unit: '%', status: capas.length > 0 && (closedCapas.length - overdueCapas.length) / Math.max(capas.length, 1) * 100 >= 95 ? 'pass' : 'warning', source: 'CAPA措施按时完成率 月≥65% 年≥95%' },
+      { name: 'CAPA按期关闭率', value: quality202608.capaSummary.onTimeRate, target: 95, unit: '%', status: quality202608.capaSummary.onTimeRate >= 95 ? 'pass' : 'warning', source: 'CAPA措施按时完成率 月≥65% 年≥95%' },
       { name: '客户投诉闭环率', value: complaints.length > 0 ? Math.round(closedComplaints.length / complaints.length * 100) : 100, target: 95, unit: '%', status: complaints.length > 0 && closedComplaints.length / complaints.length >= 0.95 ? 'pass' : 'warning', source: '按时闭环投诉/总投诉' },
       { name: '成品一次合格率', value: BOWLING.finalReagentPassRate, target: 99, unit: '%', status: BOWLING.finalReagentPassRate >= 99 ? 'pass' : 'warning', source: '成品检验(试剂)YTD' },
       { name: '仪器维修率(FFR)', value: BOWLING.ffrOverallYTD, target: 8, unit: '%', status: BOWLING.ffrOverallYTD <= 8 ? 'pass' : 'warning', source: 'Overall FFR YTD' },
@@ -1965,10 +1967,10 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
     improvements: [
       { name: '试剂市场缺陷率', value: BOWLING.reagentDefectOverallYTD, target: 2.5, unit: '%', status: BOWLING.reagentDefectOverallYTD <= 2.5 ? 'pass' : 'warning', source: '市场缺陷率≤2.5%' },
       { name: '发光条线缺陷率', value: BOWLING.reagentDefectCLIA, target: 2.5, unit: '%', status: BOWLING.reagentDefectCLIA <= 2.5 ? 'pass' : 'fail', source: '⚠️ 超目标 6.3%' },
-      { name: '供应商CAPA按时关闭率', value: 85, target: 90, unit: '%', status: 85 >= 90 ? 'pass' : 'warning', source: '3个月无进料全部关闭' },
-      { name: '关键风险物料提前预警率', value: 75, target: 90, unit: '%', status: 75 >= 90 ? 'pass' : 'warning', source: '预警数/需预警总数 ABC分级' },
+      { name: '供应商CAPA按时关闭率', value: BOWLING.supplierCapaOnTime, target: 90, unit: '%', status: BOWLING.supplierCapaOnTime >= 90 ? 'pass' : 'warning', source: '8月16/21（76%）' },
+      { name: '关键风险物料提前预警率', value: '--', target: 90, unit: '%', status: 'na', source: '待采购重新输出' },
       { name: 'SPC覆盖关键工序率', value: 65, target: 80, unit: '%', status: 65 >= 80 ? 'pass' : 'warning', source: '生产质量一体化专项' },
-      { name: '培训认证覆盖率', value: 92, target: 95, unit: '%', status: 92 >= 95 ? 'pass' : 'warning', source: '培训完成数/计划培训总数' },
+      { name: '培训认证覆盖率', value: BOWLING.trainingCoverage, target: 95, unit: '%', status: BOWLING.trainingCoverage >= 95 ? 'pass' : 'warning', source: '培训完成数/计划培训总数' },
     ],
   };
 
@@ -2057,7 +2059,7 @@ app.get('/api/dashboard/bowling-chart', requireAuth, asyncHandler(async (req, re
     ]
   };
 
-  res.json({ strategic, daily, complaintStats, updated: '2026-08' });
+  res.json(quality202608.applyToBowling({ strategic: strategic, daily: daily, complaintStats: complaintStats, updated: '2026-08' }));
 }));
 
 // ============================================================
@@ -2201,11 +2203,11 @@ app.get('/api/dashboard/production-quality', requireAuth, asyncHandler(async (re
     ]
   };
 
-  res.json({
+  res.json(quality202608.applyToProduction({
     sections: [strategicKPIs, dailyMetrics, instrumentMetrics, systemMetrics, complaintSection],
     updated: '2026-08',
     dataSource: '质量管理保龄球图-2026(2).xlsx'
-  });
+  }));
 }));
 
 // ============================================================
@@ -2540,7 +2542,7 @@ app.get('/api/dashboard/quality-modules', requireAuth, asyncHandler(async (req, 
   var events = await db.findAll('quality_events');
   var capas = await db.findAll('capa_records');
   var suppliers = await db.findAll('suppliers');
-  res.json(await buildQualityModules(events, capas, suppliers));
+  res.json(quality202608.applyToModules(await buildQualityModules(events, capas, suppliers)));
 }));
 
 // ============================================================
@@ -2550,13 +2552,13 @@ app.get('/api/dashboard/export/indicators', requireAuth, asyncHandler(async (req
   var events = await db.findAll('quality_events');
   var capas = await db.findAll('capa_records');
   var suppliers = await db.findAll('suppliers');
-  var qm = await buildQualityModules(events, capas, suppliers);
+  var qm = quality202608.applyToModules(await buildQualityModules(events, capas, suppliers));
 
   function str(v) { return v === null || v === undefined ? '' : String(v); }
   function num(v) { return typeof v === 'number' ? v : str(v); }
 
   var wb = XLSX.utils.book_new();
-  var months = ['1月','2月','3月','4月','5月','6月','7月'];
+  var months = ['1月','2月','3月','4月','5月','6月','7月','8月'];
 
   // Sheet 1: 指标总览 (Summary卡片)
   var overview = [];
@@ -2659,7 +2661,7 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
   var complaints = events.filter(function(e) { return e.event_type === 'Complaint'; });
 
   // === KPI ===
-  var total = complaints.length;
+  var total = quality202608.complaintSummary.total;
   var open = complaints.filter(function(c) { return c.status !== 'Closed'; }).length;
   var closed = complaints.filter(function(c) { return c.status === 'Closed'; }).length;
   var highRisk = complaints.filter(function(c) { return c.risk_level === 'High' || c.risk_level === 'Critical'; }).length;
@@ -2667,17 +2669,12 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
 
   // === 月度趋势 ===
   var byMonth = {};
-  complaints.forEach(function(c) {
-    var m = c.complaint_month;
-    if (m) byMonth[m] = (byMonth[m] || 0) + 1;
+  Object.keys(quality202608.complaintSummary.byMonth).forEach(function(key) {
+    byMonth[parseInt(key, 10)] = quality202608.complaintSummary.byMonth[key];
   });
 
   // === 产品线分布 ===
-  var bySource = {};
-  complaints.forEach(function(c) {
-    var src = c.complaint_source || '未分类';
-    bySource[src] = (bySource[src] || 0) + 1;
-  });
+  var bySource = Object.assign({}, quality202608.complaintSummary.byLine);
 
   // === 原因分类 (从描述提取) ===
   var byCause = {};
