@@ -8,6 +8,7 @@
 | 公网地址 | `https://fdqh-quality-hub.bonto.run` |
 | 部署方式 | Bonto CLI 文件上传 |
 | 运行模式 | Node.js + JSON 文件数据库 |
+| AI 服务 | Qwen 主服务、DeepSeek 备用，均已验证 |
 | 免费限制 | 每月 75 小时，512MB RAM，闲置休眠 |
 | 数据策略 | 仅部署通用演示种子数据，不公开内部投诉和产品专用数据 |
 
