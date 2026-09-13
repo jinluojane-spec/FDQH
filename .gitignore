@@ -1,0 +1,9 @@
+node_modules/
+data/*.json
+!.gitkeep
+.env
+.env.local
+token.txt
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: fdqh-app
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: PORT
+        value: "3100"
