@@ -1,78 +1,97 @@
 # FDQH 免费部署方案
 
-## 推荐结论
+## 当前部署
 
-| 优先级 | 平台 | 适用场景 | 免费限制 |
-|--------|------|----------|----------|
-| 主选 | Koyeb | 传统 Express 后端，Git 或 Docker 部署 | 1 个 nano 实例，512MB RAM，0.1 CPU |
-| 备用 | Render | 生态成熟，Blueprint 配置简单 | 15 分钟无请求休眠，冷启动约 30 到 60 秒 |
-| 演示 | Hugging Face Spaces | Docker 一键部署，无需改代码 | 免费 CPU Space 可能休眠，数据盘非持久 |
-| 轻量 | Deta Space | 自带 NoSQL 和文件存储 | 仅适合轻量 Node 服务 |
-| 简单 | Bonto | 浏览器编辑器，Node 专用 | 75 小时每月，30 分钟休眠 |
+| 项目 | 值 |
+|------|----|
+| 平台 | Bonto |
+| 公网地址 | `https://fdqh-quality-hub.bonto.run` |
+| 部署方式 | Bonto CLI 文件上传 |
+| 运行模式 | Node.js + JSON 文件数据库 |
+| 免费限制 | 每月 75 小时，512MB RAM，闲置休眠 |
+| 数据策略 | 仅部署通用演示种子数据，不公开内部投诉和产品专用数据 |
 
-## 主选方案：Koyeb + MongoDB Atlas
+应用访问账号和密码保存在本机：
 
-### 为什么选 Koyeb
+`tools/bonto/access.txt`
 
-1. 免费 nano 实例可以运行 Express 后端。
-2. 支持 Git 和 Docker 两种部署方式。
-3. 不要求绑定信用卡。
-4. 对传统 Node.js 应用友好，不需要改造成 Serverless。
+## 为什么选择 Bonto
 
-### 数据库
+1. 免费提供 Node.js 后端运行环境。
+2. 不要求绑定银行卡。
+3. 支持浏览器编辑器、CLI 和 Git push-to-deploy。
+4. 免费子域名格式为 `fdqh-quality-hub.bonto.run`。
 
-演示阶段可以直接使用 JSON 模式，但 Koyeb 免费实例没有持久磁盘，重新部署后数据会回到种子状态。
+## CLI 部署
 
-需要持久化时，建议使用 MongoDB Atlas 免费层：
-
-1. 注册 MongoDB Atlas。
-2. 创建 M0 免费集群。
-3. 创建数据库用户并允许网络访问。
-4. 将 `MONGODB_URI` 配置到 Koyeb 环境变量。
-
-### Docker 部署步骤
-
-1. 将 `fdqh-app` 推送到 GitHub 或 GitLab。
-2. 注册 Koyeb。
-3. 选择 Deploy from Git 或 Deploy with Docker。
-4. 端口配置为 `3100`。
-5. 设置环境变量 `PORT=3100`。
-6. 可选设置 `MONGODB_URI`。
-
-## 备用方案：Render
-
-`render.yaml` 已配置 Blueprint：
-
-```text
-服务：Web Service
-运行环境：Node
-构建命令：npm install
-启动命令：node server.js
-区域：Singapore
-健康检查：/
-```
-
-部署后免费 Web Service 会在无请求 15 分钟后休眠。可使用 UptimeRobot 定时访问来减少休眠。
-
-## 演示方案：Hugging Face Spaces
-
-`README.md` 已声明 `sdk: docker` 和 `app_port: 3100`，`Dockerfile` 可直接使用。
-
-部署后访问 Space 的公开 URL 即可。适合产品演示、截图和功能验收，不建议作为长期生产数据库。
-
-## 本地运行
+安装官方 CLI：
 
 ```powershell
-cd fdqh-app
-node server.js
+pnpm add @sidequestvr/bonto
 ```
 
-访问：`http://localhost:3100`
+登录：
 
-默认账号：
+```powershell
+bonto auth login
+```
+
+创建应用：
+
+```powershell
+bonto apps create "FDQH Digital Quality Platform" fdqh-quality-hub
+```
+
+上传文件：
+
+```powershell
+bonto files upload fdqh-quality-hub server.js server.js
+bonto files upload fdqh-quality-hub package.json package.json
+```
+
+重启应用：
+
+```powershell
+bonto restart fdqh-quality-hub --hard
+```
+
+查看日志：
+
+```powershell
+bonto logs fdqh-quality-hub --tail 100
+```
+
+## 数据安全
+
+免费公网应用不部署以下内部数据：
 
 ```text
-admin / admin123
-qa_manager / qa123
-qa_engineer / qa123
+data/complaints_2026_import.json
+data/qcp_colloidal_gold.json
+data/qcp_molecular.json
+bowling_chart_data.json
+token.txt
+```
+
+应用使用 `database/init.js` 中的通用演示数据启动。需要接入正式数据时，应配置独立数据库并完成访问控制、审计追踪和验证。
+
+## 其他平台结论
+
+| 平台 | 当前结论 |
+|------|----------|
+| Koyeb | 新版控制台已不再提供原 API 令牌入口，不适合当前免费部署流程 |
+| Render | 免费 Web Service 在部分账号上要求银行卡验证和 1 美元临时授权 |
+| Hugging Face Spaces | Docker/Gradio Space 已变为付费功能，仅静态 Space 免费 |
+| Vercel / Netlify | 适合 Serverless，不适合当前长期运行的 Express 服务 |
+
+## 生产化建议
+
+正式环境建议使用：
+
+```text
+托管平台：Bonto 付费实例、Render、Koyeb 或其他合规云平台
+数据库：MongoDB Atlas、PostgreSQL 或企业数据库
+AI 密钥：DASHSCOPE_API_KEY、DEEPSEEK_API_KEY 通过平台环境变量配置
+访问控制：应用登录、RBAC、HTTPS、审计追踪
+验证：URS、FRS、IQ、OQ、PQ 和 CSV 验证文件
 ```
