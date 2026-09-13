@@ -218,6 +218,12 @@ var moduleRows = {
     status: 'warning',
     desc: '8月97%'
   },
+  'mfg|过程检验 & 成品 (月度)|原料检验合格率(试剂)': {
+    month: 100,
+    ytd: '99.5%',
+    status: 'pass',
+    desc: '8月100%'
+  },
   'mfg|过程检验 & 成品 (月度)|成品合格率(试剂)': {
     month: 97,
     ytd: '98.8%',
@@ -414,15 +420,14 @@ function applyToModules(data) {
             desc: '市场抽检、监督抽样检查和召回计算，8月100%'
           });
         }
-        if (mod.id === 'mfg' && section.title === '仪器质量 (分机型DOA/FFR)') {
-          section.metrics.forEach(function(metric) {
-            Object.keys(metric.data || {}).forEach(function(model) {
-              metric.data[model].months = metric.data[model].months || {};
-              if (metric.label.indexOf('DOA') === 0) metric.data[model].months[MONTH] = 0;
-              if (metric.label.indexOf('FFR') === 0 && (model === 'F-i3000' || model === 'F-i1000')) metric.data[model].months[MONTH] = 10.1;
-            });
+      } else if (section.type === 'cross' && mod.id === 'mfg' && section.title === '仪器质量 (分机型DOA/FFR)') {
+        section.metrics.forEach(function(metric) {
+          Object.keys(metric.data || {}).forEach(function(model) {
+            metric.data[model].months = metric.data[model].months || {};
+            if (metric.label.indexOf('DOA') === 0) metric.data[model].months[MONTH] = 0;
+            if (metric.label.indexOf('FFR') === 0 && (model === 'F-i3000' || model === 'F-i1000')) metric.data[model].months[MONTH] = 10.1;
           });
-        }
+        });
       }
       if (section.type === 'summary') {
         if (mod.id === 'qms' && section.title === 'CAPA 管理') {

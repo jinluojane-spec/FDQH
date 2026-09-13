@@ -224,7 +224,8 @@ async function loadDashboard() {
   loadQualityModules();
 
   renderChart('chartMonthly', 'line', stats.monthlyTrends.map(function(t) { return t.month; }), stats.monthlyTrends.map(function(t) { return t.count; }), '事件数', '#D4875A');
-  renderPieChart('chartRisk', Object.keys(stats.riskDist), Object.values(stats.riskDist), ['#28A745','#F0C24C','#E57200','#C73C3C']);
+  var riskDist = stats.riskDist || stats.riskDistribution || {};
+  renderPieChart('chartRisk', Object.keys(riskDist), Object.values(riskDist), ['#28A745','#F0C24C','#E57200','#C73C3C']);
 
   var alertEl = document.getElementById('alertRows');
   if (alertEl) alertEl.innerHTML = alertRows;
