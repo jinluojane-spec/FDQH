@@ -93,7 +93,8 @@ var moduleSummary = {
     '出货产品合格率': { label: '成品合格率(试剂)', value: '98.8%', target: '≥99%', status: 'warning', desc: '8月97%' },
     'CAPA按期关闭率': { value: '100%', target: '≥95%', status: 'pass', desc: '8月按期完成率100%' },
     '客诉闭环率': { value: '--', target: '≥95%', status: 'na', desc: '半年度指标，8月无闭环明细' },
-    '不良事件数': { value: '0', target: '0', status: 'pass', desc: '电气安全/严重不良' }
+    '不良事件数': { value: '1', target: '0', status: 'fail', desc: 'PA方法学差异，建议研发改进' },
+    '市场投诉': { value: '2件', target: '0件', status: 'fail', desc: '8月市场投诉指标' }
   },
   rd: {
     '项目质量达成率': { value: '92%', target: '≥90%', status: 'pass', desc: 'YTD 92%' },
@@ -406,6 +407,9 @@ function applyToModules(data) {
       var o = summaries[item.label] || summaries[item.label.replace(/\(1-\d+月\)/, '')];
       if (o) Object.assign(item, o);
     });
+    if (mod.id === 'qms' && !mod.summary.some(function(item) { return item.label === '市场投诉'; })) {
+      mod.summary.push({ label: '市场投诉', value: '2件', target: '0件', status: 'fail', desc: '8月市场投诉指标' });
+    }
     (mod.sections || []).forEach(function(section) {
       ensureAugustHeader(section);
       if (section.type === 'table') {
@@ -418,6 +422,14 @@ function applyToModules(data) {
             ytd: '100%',
             status: 'warning',
             desc: '市场抽检、监督抽样检查和召回计算，8月100%'
+          });
+        }
+        if (mod.id === 'qms' && section.title === '考核指标 (KPI)') {
+          [
+            { name: '不良事件数', target: '0件', months: { '8月': 1 }, ytd: '1件', status: 'fail', desc: 'PA方法学差异，建议研发改进' },
+            { name: '市场投诉', target: '0件', months: { '8月': 2 }, ytd: '2件', status: 'fail', desc: '8月市场投诉指标' }
+          ].forEach(function(row) {
+            if (!section.rows.some(function(existing) { return existing.name === row.name; })) section.rows.push(row);
           });
         }
       } else if (section.type === 'cross' && mod.id === 'mfg' && section.title === '仪器质量 (分机型DOA/FFR)') {

@@ -1954,6 +1954,8 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
       { name: '出货产品合格率', value: BOWLING.finalReagentPassRate, target: 100, unit: '%', status: BOWLING.finalReagentPassRate >= 100 ? 'pass' : 'warning', source: '成品检验(试剂)YTD 99.9% 批批检', trend: 'stable' },
       { name: '不良事件按时报告率', value: 100, target: 100, unit: '%', status: 'pass', source: '药监不良事件报告 0逾期', trend: 'stable' },
       { name: '电气安全不良事故数', value: 0, target: 0, unit: '件', status: 'pass', source: '电击/起火等事件 0起', trend: 'stable' },
+      { name: '不良事件数', value: 1, target: 0, unit: '件', status: 'fail', source: 'PA方法学差异，建议研发改进', trend: 'up' },
+      { name: '市场投诉', value: 2, target: 0, unit: '件', status: 'fail', source: '8月市场投诉指标', trend: 'up' },
     ],
     // 📊 经营类 — 稳定运行指标 (参照TQM: CAPA/客诉闭环/成品合格/EQA)
     operations: [
