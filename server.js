@@ -2663,12 +2663,21 @@ app.post('/api/dashboard/import-complaints', requireAuth, asyncHandler(async (re
 app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) => {
   var events = await db.findAll('quality_events');
   var complaintFilePath = path.join(__dirname, 'data', 'complaints_2026_import.json');
+  var aftersalesFilePath = path.join(__dirname, 'data', 'aftersales_focus_20260911.json');
   var complaints = events.filter(function(e) { return e.event_type === 'Complaint'; });
+  var aftersalesFocus = null;
   if (fs.existsSync(complaintFilePath)) {
     try {
       complaints = JSON.parse(fs.readFileSync(complaintFilePath, 'utf8'));
     } catch (error) {
       console.error('Complaint detail load error:', error.message);
+    }
+  }
+  if (fs.existsSync(aftersalesFilePath)) {
+    try {
+      aftersalesFocus = JSON.parse(fs.readFileSync(aftersalesFilePath, 'utf8'));
+    } catch (error) {
+      console.error('Aftersales focus load error:', error.message);
     }
   }
 
@@ -2844,9 +2853,11 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
       warnings: [
         '源表汇总口径为613件，但可逐条核对的明细为590件。',
         '缺少23条仪器投诉明细，主要集中在2026年8月。',
-        '汇总趋势和占比按613件口径展示，原因分类和产品明细按590条可用明细分析。'
+        '汇总趋势和占比按613件口径展示，原因分类和产品明细按590条可用明细分析。',
+        '售后111条为重点问题复盘分析，作为独立来源展示，不重复计入613件客诉总数。'
       ]
     },
+    aftersalesFocus: aftersalesFocus,
     repeats: complaints.filter(function(c) { return c.complaint_repeat === true; }).sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);}).map(function(c) { return { id: c.id, product_name: c.product_name, batch: c.batch_no, description: (c.description||'').substring(0,80), cause: c.complaint_cause, status: c.status, date: c.created_at, source: (c.complaint_source||'').replace('2026上半年投诉汇总-','') }; }),
     list: { data: paged, total: filtered.length, page: page, limit: limit },
   });

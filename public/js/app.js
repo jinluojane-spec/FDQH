@@ -990,6 +990,32 @@ async function loadComplaintsDashboard() {
     '<button class="btn btn-outline btn-sm" ' + (list.page * 20 >= list.total ? 'disabled' : '') + ' onclick="complaintFilter.page++;loadComplaintsDashboard();">下一页</button>' +
     '</div></div></div>';
 
+  if (data.aftersalesFocus) {
+    var af = data.aftersalesFocus;
+    var afSummary = af.summary || {};
+    html += '<div class="card" style="margin-top:16px;"><div class="card-header"><h3>售后重点客诉分析</h3><span class="badge badge-warning">来源：售后</span></div><div class="card-body">' +
+      '<div class="module-summary" style="margin-bottom:16px;">' +
+      '<div class="module-summary-card ms-info"><div class="ms-value">' + (afSummary.total || 0) + '</div><div class="ms-label">售后重点分析</div><div class="ms-target">不重复计入613总客诉</div></div>' +
+      '<div class="module-summary-card ms-warn"><div class="ms-value">' + (afSummary.productAnalysis || 0) + '</div><div class="ms-label">产品/市场分析</div><div class="ms-target">重点问题复盘</div></div>' +
+      '<div class="module-summary-card ms-info"><div class="ms-value">' + (afSummary.instrumentAnalysis || 0) + '</div><div class="ms-label">仪器专项分析</div><div class="ms-target">专项问题跟踪</div></div>' +
+      '<div class="module-summary-card ' + ((afSummary.inProgress || 0) > 0 ? 'ms-warn' : 'ms-pass') + '"><div class="ms-value">' + (afSummary.inProgress || 0) + '</div><div class="ms-label">进行中</div><div class="ms-target">已关闭 ' + (afSummary.closed || 0) + ' 项</div></div>' +
+      '</div>' +
+      '<div style="height:260px;"><canvas id="compAftersalesCategory"></canvas></div>' +
+      '<details style="margin-top:14px;">' +
+      '<summary style="cursor:pointer;font-size:12px;color:#B45309;font-weight:600;">查看售后重点客诉分析明细（' + (afSummary.total || 0) + ' 条）</summary>' +
+      '<div style="max-height:480px;overflow:auto;margin-top:10px;">' +
+      '<table class="data-table" style="font-size:11px;"><thead><tr><th>类型</th><th>产品/机型</th><th>分类</th><th>问题描述</th><th>根因</th><th>措施与进度</th><th>状态</th></tr></thead><tbody>' +
+      (af.records || []).map(function(record) {
+        return '<tr><td>' + (record.record_type || '') + '</td><td><b>' + (record.product_name || '') + '</b></td><td>' + (record.product_category || '') + '</td>' +
+          '<td style="text-align:left;min-width:220px;">' + (record.description || '').substring(0, 120) + '</td>' +
+          '<td style="text-align:left;min-width:180px;">' + (record.root_cause || '-').substring(0, 100) + '</td>' +
+          '<td style="text-align:left;min-width:220px;">' + (record.action_progress || '-').substring(0, 140) + '</td>' +
+          '<td><span class="badge ' + (record.status === 'Closed' ? 'badge-success' : 'badge-warning') + '">' + (record.status || '') + '</span></td></tr>';
+      }).join('') +
+      '</tbody></table></div></details>' +
+      '</div></div>';
+  }
+
   document.getElementById('complaintsContent').innerHTML = html;
 
   // === Charts ===
@@ -1002,6 +1028,11 @@ async function loadComplaintsDashboard() {
     var srcLabels = Object.keys(srcData).map(function(s) { return s.replace('2026上半年投诉汇总-', '').replace('试剂投诉-', '试剂-').replace('仪器投诉-', '仪器-'); });
     var srcValues = Object.keys(srcData).map(function(s) { return srcData[s]; });
     renderPieChart('compSourceChart', srcLabels, srcValues, ['#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899']);
+
+    if (data.aftersalesFocus && data.aftersalesFocus.byCategory && document.getElementById('compAftersalesCategory')) {
+      var afCategories = data.aftersalesFocus.byCategory;
+      renderPieChart('compAftersalesCategory', Object.keys(afCategories), Object.values(afCategories), ['#F97316','#FB923C','#FDBA74','#F59E0B','#FACC15','#EA580C']);
+    }
 
     // === New charts (replacing removed compCauseChart) ===
     // 1. 试剂问题分类Top10 环状图
