@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 const XLSX = require('xlsx');
@@ -2661,7 +2662,15 @@ app.post('/api/dashboard/import-complaints', requireAuth, asyncHandler(async (re
 
 app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) => {
   var events = await db.findAll('quality_events');
+  var complaintFilePath = path.join(__dirname, 'data', 'complaints_2026_import.json');
   var complaints = events.filter(function(e) { return e.event_type === 'Complaint'; });
+  if (fs.existsSync(complaintFilePath)) {
+    try {
+      complaints = JSON.parse(fs.readFileSync(complaintFilePath, 'utf8'));
+    } catch (error) {
+      console.error('Complaint detail load error:', error.message);
+    }
+  }
 
   // === KPI ===
   var total = quality202608.complaintSummary.total;
@@ -2824,6 +2833,20 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
     instrumentPareto: instrumentPareto,
     reagentLineDesign: reagentLineDesign,
     reagentTop10: reagentTop10,
+    dataQuality: {
+      summaryTotal: quality202608.complaintSummary.total,
+      detailTotal: quality202608.complaintSummary.detailTotal,
+      missingDetail: quality202608.complaintSummary.missingDetail,
+      reagentDetails: quality202608.complaintSummary.detailReagent,
+      instrumentDetails: quality202608.complaintSummary.detailInstrument,
+      augustSummary: quality202608.complaintSummary.augustSummary,
+      augustDetail: quality202608.complaintSummary.augustDetail,
+      warnings: [
+        '源表汇总口径为613件，但可逐条核对的明细为590件。',
+        '缺少23条仪器投诉明细，主要集中在2026年8月。',
+        '汇总趋势和占比按613件口径展示，原因分类和产品明细按590条可用明细分析。'
+      ]
+    },
     repeats: complaints.filter(function(c) { return c.complaint_repeat === true; }).sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);}).map(function(c) { return { id: c.id, product_name: c.product_name, batch: c.batch_no, description: (c.description||'').substring(0,80), cause: c.complaint_cause, status: c.status, date: c.created_at, source: (c.complaint_source||'').replace('2026上半年投诉汇总-','') }; }),
     list: { data: paged, total: filtered.length, page: page, limit: limit },
   });

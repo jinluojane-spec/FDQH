@@ -921,6 +921,13 @@ async function loadComplaintsDashboard() {
     '<div class="module-summary-card ' + (k.repeat > 0 ? 'ms-warn' : 'ms-pass') + '"><div class="ms-value">' + k.repeat + '</div><div class="ms-label">🔁 重复投诉</div><div class="ms-target">重复发生</div></div>' +
     '</div>';
 
+  if (data.dataQuality && data.dataQuality.warnings && data.dataQuality.warnings.length) {
+    html += '<div style="background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400E;">' +
+      '<b>数据一致性提示</b>' +
+      data.dataQuality.warnings.map(function(message) { return '<div style="margin-top:4px;">' + message + '</div>'; }).join('') +
+      '</div>';
+  }
+
   // === Charts Row 1: 月度趋势 + 来源分布 ===
   html += '<div class="charts-row">' +
     '<div class="card"><div class="card-header"><h3>📈 投诉月度趋势 (2026上半年)</h3></div><div class="card-body"><div class="chart-container"><canvas id="compMonthChart"></canvas></div></div></div>' +

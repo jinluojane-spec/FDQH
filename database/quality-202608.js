@@ -6,6 +6,13 @@ var MONTH = '8月';
 var complaintSummary = {
   total: 613,
   period: '2026年1-8月',
+  sourceFile: '质量管理保龄球图-202608(1).xlsx',
+  detailTotal: 590,
+  detailReagent: 120,
+  detailInstrument: 470,
+  missingDetail: 23,
+  augustSummary: 48,
+  augustDetail: 25,
   byMonth: { '1月': 126, '2月': 66, '3月': 66, '4月': 66, '5月': 70, '6月': 65, '7月': 106, '8月': 48 },
   byLine: { '仪器': 493, '微生物': 40, '发光': 42, '生化': 22, '荧光PCR': 12, 'POCT': 4 },
   augustByLine: { '试剂': 10, '仪器': 38 }
