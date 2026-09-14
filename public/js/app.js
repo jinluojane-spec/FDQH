@@ -161,6 +161,7 @@ function navigate(page) {
     case 'audit': loadAuditLogs(); break;
     case 'ai': loadAIAssistant(); break;
     case 'complaints': loadComplaintsDashboard(); break;
+    case 'returns': loadReturnsDashboard(); break;
     case 'workshop': loadWorkshopDashboard(); break;
   }
 }
@@ -809,6 +810,101 @@ async function importChanges(input) {
 
 // ===== 投诉看板 =====
 var complaintFilter = { source: '', cause: '', search: '', page: 1 };
+
+async function loadReturnsDashboard() {
+  var container = document.getElementById('returnsContent');
+  if (!container) return;
+  container.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;">⏳ 加载退换货数据...</div></div>';
+
+  var data = await apiGet('/dashboard/returns');
+  if (!data) {
+    container.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;padding:40px;">退换货数据加载失败</div></div>';
+    return;
+  }
+
+  var s = data.summary;
+  var html = '';
+
+  html += '<div class="module-summary">' +
+    '<div class="module-summary-card ms-info"><div class="ms-value">' + s.total + '</div><div class="ms-label">整合记录数</div><div class="ms-target">' + data.periodLabel + '</div></div>' +
+    '<div class="module-summary-card ms-fail"><div class="ms-value">' + s.quality + '</div><div class="ms-label">质量问题</div><div class="ms-target">占比 ' + s.qualityRate + '%</div></div>' +
+    '<div class="module-summary-card ms-pass"><div class="ms-value">' + s.nonQuality + '</div><div class="ms-label">非质量问题</div><div class="ms-target">占比 ' + s.nonQualityRate + '%</div></div>' +
+    '<div class="module-summary-card ms-info"><div class="ms-value">' + s.orders + '</div><div class="ms-label">涉及订单号</div><div class="ms-target">按整合台账统计</div></div>' +
+    '<div class="module-summary-card ms-warn"><div class="ms-value">' + s.augustTotal + '</div><div class="ms-label">8月退换货</div><div class="ms-target">质量问题 ' + s.augustQuality + ' / 非质量 ' + s.augustNonQuality + '</div></div>' +
+    '<div class="module-summary-card ' + (s.augustQualityRate >= 50 ? 'ms-fail' : 'ms-warn') + '"><div class="ms-value">' + s.augustQualityRate + '%</div><div class="ms-label">8月质量问题占比</div><div class="ms-target">24 / 42</div></div>' +
+    '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:16px;">' +
+    '<div class="card"><div class="card-header"><h3>月度退换货趋势</h3><span style="font-size:11px;">质量问题与非质量问题堆叠</span></div><div class="card-body" style="height:300px;"><canvas id="returnsMonthChart"></canvas></div></div>' +
+    '<div class="card"><div class="card-header"><h3>质量性质分布</h3><span style="font-size:11px;">共 ' + s.total + ' 条</span></div><div class="card-body" style="height:300px;"><canvas id="returnsQualityChart"></canvas></div></div>' +
+    '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:16px;">' +
+    '<div class="card"><div class="card-header"><h3>质量问题原因</h3><span style="font-size:11px;">共 ' + s.quality + ' 条</span></div><div class="card-body" style="height:270px;"><canvas id="returnsQualityReasonChart"></canvas></div></div>' +
+    '<div class="card"><div class="card-header"><h3>非质量问题原因</h3><span style="font-size:11px;">共 ' + s.nonQuality + ' 条</span></div><div class="card-body" style="height:270px;"><canvas id="returnsNonQualityReasonChart"></canvas></div></div>' +
+    '</div>';
+
+  html += '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>产品类型分布</h3><span style="font-size:11px;">按质量性质拆分</span></div><div class="card-body" style="height:360px;"><canvas id="returnsProductChart"></canvas></div></div>';
+
+  html += '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>原因明细</h3><span style="font-size:11px;">质量问题 / 非质量问题</span></div><div class="card-body no-padding" style="overflow-x:auto;">' +
+    '<table class="data-table"><thead><tr><th>质量性质</th><th>原因分类</th><th>条数</th><th>类内占比</th><th>占全部</th></tr></thead><tbody>';
+  data.qualityReasons.forEach(function(row) {
+    html += '<tr><td><span class="badge badge-danger">质量问题</span></td><td>' + row.name + '</td><td><b>' + row.count + '</b></td><td>' + row.qualityRate + '%</td><td>' + row.totalRate + '%</td></tr>';
+  });
+  data.nonQualityReasons.forEach(function(row) {
+    html += '<tr><td><span class="badge badge-success">非质量问题</span></td><td>' + row.name + '</td><td><b>' + row.count + '</b></td><td>' + row.nonQualityRate + '%</td><td>' + row.totalRate + '%</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  html += '<div class="card"><div class="card-header"><h3>数据说明与观察</h3><span style="font-size:11px;">来源: ' + data.sourceFile + '</span></div><div class="card-body"><ul class="mod-list">' +
+    data.insights.map(function(item) { return '<li><span class="mod-issue">' + item + '</span></li>'; }).join('') +
+    '</ul></div></div>';
+
+  container.innerHTML = html;
+
+  setTimeout(function() {
+    var monthLabels = data.months.map(function(x) { return x.month; });
+    var monthCtx = document.getElementById('returnsMonthChart').getContext('2d');
+    if (charts.returnsMonth) charts.returnsMonth.destroy();
+    charts.returnsMonth = new Chart(monthCtx, {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: [
+          { label: '质量问题', data: data.months.map(function(x) { return x.quality; }), backgroundColor: '#EF4444', borderRadius: 3 },
+          { label: '非质量问题', data: data.months.map(function(x) { return x.nonQuality; }), backgroundColor: '#10B981', borderRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+        plugins: { legend: { position: 'top' } }
+      }
+    });
+
+    renderPieChart('returnsQualityChart', ['质量问题', '非质量问题'], [s.quality, s.nonQuality], ['#EF4444', '#10B981']);
+    renderPieChart('returnsQualityReasonChart', data.qualityReasons.map(function(x) { return x.name; }), data.qualityReasons.map(function(x) { return x.count; }), ['#DC2626', '#F97316', '#F59E0B', '#FBBF24']);
+    renderPieChart('returnsNonQualityReasonChart', data.nonQualityReasons.map(function(x) { return x.name; }), data.nonQualityReasons.map(function(x) { return x.count; }), ['#0EA5E9', '#22C55E', '#14B8A6', '#8B5CF6', '#6366F1', '#F59E0B', '#64748B']);
+
+    var productCtx = document.getElementById('returnsProductChart').getContext('2d');
+    if (charts.returnsProduct) charts.returnsProduct.destroy();
+    charts.returnsProduct = new Chart(productCtx, {
+      type: 'bar',
+      data: {
+        labels: data.productTypes.map(function(x) { return x.name; }),
+        datasets: [
+          { label: '质量问题', data: data.productTypes.map(function(x) { return x.quality; }), backgroundColor: '#EF4444', borderRadius: 3 },
+          { label: '非质量问题', data: data.productTypes.map(function(x) { return x.nonQuality; }), backgroundColor: '#10B981', borderRadius: 3 }
+        ]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        scales: { x: { stacked: true, beginAtZero: true }, y: { stacked: true } },
+        plugins: { legend: { position: 'top' } }
+      }
+    });
+  }, 120);
+}
 
 async function loadComplaintsDashboard() {
   var data = await apiGet('/dashboard/complaints?page=' + complaintFilter.page + '&source=' + encodeURIComponent(complaintFilter.source) + '&cause=' + encodeURIComponent(complaintFilter.cause) + '&search=' + encodeURIComponent(complaintFilter.search));

@@ -32,7 +32,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="logo">
       <h2>🩺 FDQH</h2>
-      <span>FosunDx Quality Hub v2.22.0</span>
+      <span>FosunDx Quality Hub v2.23.0</span>
     </div>
     <nav>
       <a data-page="dashboard" class="active" onclick="navigate('dashboard')"><span class="icon">📊</span> 驾驶舱</a>
@@ -56,6 +56,7 @@
           <a href="#" data-page="masters" onclick="navigate('masters');return false;"><span class="icon">📋</span> 主数据管理</a>
         </div>
       </div>
+      <a href="#" data-page="returns" onclick="navigate('returns');return false;"><span class="icon">↩️</span> 退换货看板</a>
       <a href="#" data-page="changes" onclick="navigate('changes');return false;"><span class="icon">🔄</span> 变更控制</a>
       <a href="#" data-page="ai" onclick="navigate('ai');return false;"><span class="icon">🤖</span> AI 助手</a>
       <a href="#" data-page="audit" onclick="navigate('audit');return false;"><span class="icon">📝</span> 审计追踪</a>
@@ -328,6 +329,12 @@
       <div id="complaintsContent"></div>
     </div>
 
+    <!-- ============ RETURNS PAGE 退换货看板 ============ -->
+    <div id="page-returns" class="page">
+      <div class="page-header"><h2>↩️ 退换货看板</h2><p>2026年1-8月整合清单 · 质量问题 / 非质量问题 · 月度趋势与原因分析</p></div>
+      <div id="returnsContent"></div>
+    </div>
+
   </main>
 </div>
 
@@ -453,7 +460,7 @@
 
 </div><!-- /appLayout -->
 
-<script src="/js/app.js?v=2.22.0"></script>
+<script src="/js/app.js?v=2.23.0"></script>
 <script src="/js/ai-chat.js?v=2.5.3"></script>
 </body>
 </html>

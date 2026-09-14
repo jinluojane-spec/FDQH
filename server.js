@@ -20,6 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Database
 const db = require('./database/init');
 const quality202608 = require('./database/quality-202608');
+const returns202608 = require('./database/returns-202608');
 
 // AI Service
 const aiService = require('./ai');
@@ -2827,6 +2828,15 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
     list: { data: paged, total: filtered.length, page: page, limit: limit },
   });
 }));
+
+// ============================================================
+// RETURNS / EXCHANGES — 退换货看板
+// 数据来源: 1-8月退换货整合清单.xlsx
+// 仅提供聚合数据，不暴露客户、订单和明细记录
+// ============================================================
+app.get('/api/dashboard/returns', requireAuth, function(req, res) {
+  res.json(returns202608);
+});
 
 
 // ============================================================
