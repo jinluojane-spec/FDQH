@@ -335,7 +335,7 @@ async function callAIStream(userMessage) {
       },
       body: JSON.stringify({
         assistantType: aiState.currentAssistant,
-        messages: msgs.filter(function(m) { return m.role !== 'assistant' || m.content !== ''; }).slice(0, -1),
+        messages: msgs.filter(function(m) { return m.role !== 'assistant' || m.content !== ''; }),
       }),
       signal: controller.signal,
     });

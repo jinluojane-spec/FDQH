@@ -61,7 +61,7 @@ function requireAuth(req, res, next) {
 function asyncHandler(fn) {
   return function(req, res, next) {
     Promise.resolve(fn(req, res, next)).catch(function(err) {
-      console.error('Route error:', err.message);
+      console.error('Route error:', err.stack || err);
       res.status(500).json({ error: 'Internal server error' });
     });
   };
@@ -3518,6 +3518,108 @@ app.post('/api/audit-findings/seed', requireAuth, asyncHandler(async (req, res) 
 
 // AI ASSISTANT
 // ============================================================
+async function buildRiskPredictionContext() {
+  var events = await db.findAll('quality_events');
+  var capas = await db.findAll('capa_records');
+  var products = await db.findAll('products');
+  var suppliers = await db.findAll('suppliers');
+
+  var riskDistribution = { Low: 0, Medium: 0, High: 0, Critical: 0 };
+  var eventsByType = {};
+  var eventsBySource = {};
+  var eventsByProduct = {};
+  var monthlyCounts = {};
+
+  events.forEach(function(event) {
+    var risk = event.risk_level || 'Medium';
+    riskDistribution[risk] = (riskDistribution[risk] || 0) + 1;
+    eventsByType[event.event_type || 'Unknown'] = (eventsByType[event.event_type || 'Unknown'] || 0) + 1;
+    var source = event.audit_source || event.event_subtype || '未分类';
+    eventsBySource[source] = (eventsBySource[source] || 0) + 1;
+    var product = event.product_name || '未关联产品';
+    eventsByProduct[product] = (eventsByProduct[product] || 0) + 1;
+    if (event.occurred_at) {
+      var month = String(event.occurred_at).slice(0, 7);
+      monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
+    }
+  });
+
+  var openStatuses = ['Open', 'In Investigation', 'Root Cause Analysis', 'CAPA Created', 'In Progress'];
+  var openEvents = events.filter(function(event) { return openStatuses.indexOf(event.status) >= 0; });
+  var highRiskEvents = events.filter(function(event) { return event.risk_level === 'High' || event.risk_level === 'Critical'; });
+  var overdueCAPAs = capas.filter(function(capa) { return capa.due_date && new Date(capa.due_date) < new Date() && capa.status !== 'Closed'; });
+
+  var recentSignals = events.slice().sort(function(a, b) {
+    return new Date(b.occurred_at || b.created_at || 0) - new Date(a.occurred_at || a.created_at || 0);
+  }).slice(0, 20).map(function(event) {
+    return {
+      event_code: event.event_code || event.id,
+      type: event.event_type,
+      source: event.audit_source || event.event_subtype || '',
+      product: event.product_name || '',
+      risk: event.risk_level || '',
+      status: event.status || '',
+      department: event.responsible_dept || '',
+      description: String(event.description || '').slice(0, 100)
+    };
+  });
+
+  var topRiskProducts = Object.keys(eventsByProduct).map(function(name) {
+    var related = events.filter(function(event) { return (event.product_name || '未关联产品') === name; });
+    return {
+      name: name,
+      events: related.length,
+      highRisk: related.filter(function(event) { return event.risk_level === 'High' || event.risk_level === 'Critical'; }).length,
+      open: related.filter(function(event) { return openStatuses.indexOf(event.status) >= 0; }).length
+    };
+  }).sort(function(a, b) {
+    return (b.highRisk * 3 + b.open * 2 + b.events) - (a.highRisk * 3 + a.open * 2 + a.events);
+  }).slice(0, 10);
+
+  var supplierRisk = suppliers.map(function(supplier) {
+    return {
+      name: supplier.supplier_name,
+      risk_level: supplier.risk_level,
+      risk_score: supplier.risk_score,
+      quality_score: supplier.quality_score,
+      audit_result: supplier.audit_result,
+      scar_count: supplier.scar_count || 0
+    };
+  }).sort(function(a, b) { return (b.risk_score || 0) - (a.risk_score || 0); }).slice(0, 10);
+
+  return {
+    dataAsOf: '2026-09-14',
+    dataBasis: 'FDQH当前质量事件库、CAPA库、供应商数据、2026年8月质量指标和退换货汇总',
+    summary: {
+      totalEvents: events.length,
+      openEvents: openEvents.length,
+      closedEvents: events.length - openEvents.length,
+      highRiskEvents: highRiskEvents.length,
+      totalCAPAs: capas.length,
+      openCAPAs: capas.filter(function(capa) { return capa.status !== 'Closed'; }).length,
+      overdueCAPAs: overdueCAPAs.length,
+      products: products.length,
+      suppliers: suppliers.length
+    },
+    riskDistribution: riskDistribution,
+    eventsByType: eventsByType,
+    eventsBySource: eventsBySource,
+    eventsByProduct: eventsByProduct,
+    monthlyCounts: monthlyCounts,
+    topRiskProducts: topRiskProducts,
+    recentSignals: recentSignals,
+    topSupplierRisks: supplierRisk,
+    qualityIndicators: quality202608.kpis,
+    complaints: quality202608.complaintSummary,
+    returns: returns202608.summary,
+    dataNotes: [
+      '事件数据来自2026年体系考核、内审及供应商审核不合格项汇总。',
+      '质量指标数据以2026年8月口径为准。',
+      '责任人姓名、客户信息和原始明细未注入模型上下文。'
+    ]
+  };
+}
+
 app.get('/api/ai/status', requireAuth, (req, res) => {
   res.json({
     available: aiService.isAvailable(),
@@ -3539,20 +3641,28 @@ app.get('/api/ai/status', requireAuth, (req, res) => {
   });
 });
 
-app.post('/api/ai/chat', requireAuth, (req, res) => {
+app.post('/api/ai/chat', requireAuth, asyncHandler(async (req, res) => {
   var { assistantType, messages, contextData } = req.body;
   if (!aiService.isAvailable()) return res.status(503).json({ error: 'AI服务未配置' });
   if (!assistantType || !['quality_expert', 'knowledge', 'capa_rca', 'risk_prediction'].includes(assistantType)) {
     return res.status(400).json({ error: '无效的助手类型' });
   }
-  var fullMessages = aiService.buildMessages(assistantType, messages || [], contextData || null);
+  var effectiveContext = contextData || null;
+  if (assistantType === 'risk_prediction' && !effectiveContext) {
+    effectiveContext = await buildRiskPredictionContext();
+  }
+  var fullMessages = aiService.buildMessages(assistantType, messages || [], effectiveContext);
   aiService.streamChat(assistantType, fullMessages, res);
-});
+}));
 
 app.post('/api/ai/chat/simple', requireAuth, asyncHandler(async (req, res) => {
   var { assistantType, messages, contextData } = req.body;
   if (!aiService.isAvailable()) return res.status(503).json({ error: 'AI服务未配置' });
-  var fullMessages = aiService.buildMessages(assistantType, messages || [], contextData || null);
+  var effectiveContext = contextData || null;
+  if (assistantType === 'risk_prediction' && !effectiveContext) {
+    effectiveContext = await buildRiskPredictionContext();
+  }
+  var fullMessages = aiService.buildMessages(assistantType, messages || [], effectiveContext);
   var response = await aiService.chat(assistantType, fullMessages);
   res.json({ content: response });
 }));
@@ -3585,34 +3695,7 @@ app.post('/api/ai/analyze-event/:eventId', requireAuth, asyncHandler(async (req,
 }));
 
 app.post('/api/ai/risk-predict', requireAuth, asyncHandler(async (req, res) => {
-  var events = await db.findAll('quality_events');
-  var capas = await db.findAll('capa_records');
-  var products = await db.findAll('products');
-  var suppliers = await db.findAll('suppliers');
-
-  var contextData = {
-    summary: {
-      totalEvents: events.length,
-      openEvents: events.filter(function(e) { return e.status === 'Open' || e.status === 'In Investigation'; }).length,
-      criticalEvents: events.filter(function(e) { return e.risk_level === 'Critical' || e.risk_level === 'High'; }).length,
-      overdueCAPAs: capas.filter(function(c) { return c.due_date && new Date(c.due_date) < new Date() && c.status !== 'Closed'; }).length,
-    },
-    eventsByProduct: {}, eventsByType: {},
-    riskDistribution: { Low: 0, Medium: 0, High: 0, Critical: 0 },
-    monthlyCounts: {}, topRiskProducts: [],
-  };
-
-  events.forEach(function(e) {
-    contextData.riskDistribution[e.risk_level] = (contextData.riskDistribution[e.risk_level] || 0) + 1;
-    contextData.eventsByType[e.event_type] = (contextData.eventsByType[e.event_type] || 0) + 1;
-    if (e.product_name) contextData.eventsByProduct[e.product_name] = (contextData.eventsByProduct[e.product_name] || 0) + 1;
-    if (e.created_at) { var m = e.created_at.slice(0, 7); contextData.monthlyCounts[m] = (contextData.monthlyCounts[m] || 0) + 1; }
-  });
-
-  contextData.topRiskProducts = Object.entries(contextData.eventsByProduct)
-    .sort(function(a, b) { return b[1] - a[1]; }).slice(0, 5)
-    .map(function(entry) { return { name: entry[0], count: entry[1] }; });
-
+  var contextData = await buildRiskPredictionContext();
   var messages = [{ role: 'user', content: '请基于当前质量数据进行风险预测分析' }];
   var fullMessages = aiService.buildMessages('risk_prediction', messages, contextData);
   var response = await aiService.chat('risk_prediction', fullMessages);
