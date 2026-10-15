@@ -830,8 +830,8 @@ async function loadReturnsDashboard() {
     '<div class="module-summary-card ms-fail"><div class="ms-value">' + s.quality + '</div><div class="ms-label">质量问题</div><div class="ms-target">占比 ' + s.qualityRate + '%</div></div>' +
     '<div class="module-summary-card ms-pass"><div class="ms-value">' + s.nonQuality + '</div><div class="ms-label">非质量问题</div><div class="ms-target">占比 ' + s.nonQualityRate + '%</div></div>' +
     '<div class="module-summary-card ms-info"><div class="ms-value">' + s.orders + '</div><div class="ms-label">涉及订单号</div><div class="ms-target">按整合台账统计</div></div>' +
-    '<div class="module-summary-card ms-warn"><div class="ms-value">' + s.augustTotal + '</div><div class="ms-label">8月退换货</div><div class="ms-target">质量问题 ' + s.augustQuality + ' / 非质量 ' + s.augustNonQuality + '</div></div>' +
-    '<div class="module-summary-card ' + (s.augustQualityRate >= 50 ? 'ms-fail' : 'ms-warn') + '"><div class="ms-value">' + s.augustQualityRate + '%</div><div class="ms-label">8月质量问题占比</div><div class="ms-target">24 / 42</div></div>' +
+    '<div class="module-summary-card ms-warn"><div class="ms-value">' + s.septemberTotal + '</div><div class="ms-label">9月退换货</div><div class="ms-target">质量问题 ' + s.septemberQuality + ' / 非质量 ' + s.septemberNonQuality + '</div></div>' +
+    '<div class="module-summary-card ' + (s.septemberQualityRate >= 50 ? 'ms-fail' : 'ms-warn') + '"><div class="ms-value">' + s.septemberQualityRate + '%</div><div class="ms-label">9月质量问题占比</div><div class="ms-target">' + s.septemberQuality + ' / ' + s.septemberTotal + '</div></div>' +
     '</div>';
 
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:16px;">' +

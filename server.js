@@ -21,7 +21,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Database
 const db = require('./database/init');
 const quality202608 = require('./database/quality-202608');
-const returns202608 = require('./database/returns-202608');
+const returns202609 = require('./database/returns-202609');
 
 // AI Service
 const aiService = require('./ai');
@@ -2869,7 +2869,7 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
 // 仅提供聚合数据，不暴露客户、订单和明细记录
 // ============================================================
 app.get('/api/dashboard/returns', requireAuth, function(req, res) {
-  res.json(returns202608);
+  res.json(returns202609);
 });
 
 
@@ -3645,7 +3645,7 @@ async function buildRiskPredictionContext() {
     topSupplierRisks: supplierRisk,
     qualityIndicators: quality202608.kpis,
     complaints: quality202608.complaintSummary,
-    returns: returns202608.summary,
+    returns: returns202609.summary,
     dataNotes: [
       '事件数据来自2026年体系考核、内审及供应商审核不合格项汇总。',
       '质量指标数据以2026年8月口径为准。',
