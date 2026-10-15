@@ -1,5 +1,5 @@
 // 2026年8-9月质量指标覆盖数据
-// 来源: FDQH_quality_indicators_2026-10-15-少800P数据.xlsx
+// 来源: FDQH_quality_indicators_2026-10-15.xlsx
 
 var base = require('./quality-202608');
 
@@ -49,7 +49,6 @@ var kpis = Object.assign({}, base.kpis, {
 });
 
 var dataIssues = [
-  '附件名称为“少800P数据”，9月仪器总FFR及新品FFR（800P、药敏仪）缺少完整结果，相关指标暂不能判定为完整月报。',
   '9月EQA单元格同时写有“18/18”和“90”，如18项全部合格，正确值应为100%，需确认源表笔误。',
   '客诉汇总总数按671件、仪器527件统计，但非仪器条线合计144件，与“客诉总数（试剂）120件”不一致。',
   'CAPA YTD写为总数45、已关闭45、处理中0，但9月又写总数11、已关闭5、处理中6，汇总与月度明细无法直接勾稽。',
@@ -158,11 +157,11 @@ function applyToBowling(input) {
   if (ffr) {
     ffr.ytd = 8.3;
     setMonthObject(ffr.months, '8月', { plan: 8, actual: 9.2, status: lowerIsBetterStatus(9.2, 8) });
-    setMonthObject(ffr.months, '9月', { plan: 8, actual: null, status: 'na' });
+    setMonthObject(ffr.months, '9月', { plan: 8, actual: 7.5, status: lowerIsBetterStatus(7.5, 8) });
     if (ffr.drilldown && ffr.drilldown[0]) {
       ffr.drilldown[0].ytd = 8.0;
       setMonthValue(ffr.drilldown[0].months, '8月', 8.5);
-      setMonthValue(ffr.drilldown[0].months, '9月', null);
+      setMonthValue(ffr.drilldown[0].months, '9月', 7.9);
     }
     if (ffr.drilldown && ffr.drilldown[1]) {
       ffr.drilldown[1].ytd = 8.0;
@@ -209,6 +208,12 @@ function applyToBowling(input) {
 
 function updateProductionMetric(section, id, august, september, ytd, status) {
   var item = section && (section.metrics || []).find(function(row) { return row.id === id; });
+  if (!item && section && section.metrics) {
+    section.metrics.some(function(metric) {
+      item = (metric.children || []).find(function(row) { return row.id === id; });
+      return Boolean(item);
+    });
+  }
   if (!item) return;
   item.months = item.months || {};
   item.months['8月'] = august;
@@ -220,7 +225,7 @@ function updateProductionMetric(section, id, august, september, ytd, status) {
 function applyToProduction(input) {
   var data = base.applyToProduction(input);
   data.updated = '2026-09';
-  data.dataSource = 'FDQH_quality_indicators_2026-10-15-少800P数据.xlsx';
+  data.dataSource = 'FDQH_quality_indicators_2026-10-15.xlsx';
 
   var sections = data.sections || [];
   sections.forEach(function(section) {
@@ -229,10 +234,10 @@ function applyToProduction(input) {
 
   var strategic = sections.find(function(section) { return section.title && section.title.indexOf('战略解码') === 0; });
   updateProductionMetric(strategic, 'DOA', 0, 7.1, '8.1%', 'fail');
-  updateProductionMetric(strategic, 'DOA-N', 0, null, '8.5%', 'fail');
+  updateProductionMetric(strategic, 'DOA-N', 0, 7.7, '8.5%', 'fail');
   updateProductionMetric(strategic, 'DOA-M', 0, 0, '8.5%', 'fail');
-  updateProductionMetric(strategic, 'FFR', 9.2, null, '8.3%', 'fail');
-  updateProductionMetric(strategic, 'FFR-N', 8.5, null, '8.0%', 'warning');
+  updateProductionMetric(strategic, 'FFR', 9.2, 7.5, '8.3%', 'fail');
+  updateProductionMetric(strategic, 'FFR-N', 8.5, 7.9, '8.0%', 'warning');
   updateProductionMetric(strategic, 'FFR-M', 10.1, 7.0, '8.0%', 'warning');
   updateProductionMetric(strategic, 'DEFECT', 3.4, 7.3, '2.4%', 'fail');
   updateProductionMetric(strategic, 'DEF-CLIA', 3.4, 7.3, '4.9%', 'fail');
@@ -301,7 +306,7 @@ function addSeptemberFaultSection(module) {
     rows: [
       { name: '故障率(仪器) 1000', target: '参照历史水平', months: { '9月': 3.66 }, ytd: '3.66%', status: 'warning', desc: '9月3/82' },
       { name: '故障率(仪器) 3000', target: '参照历史水平', months: { '9月': 18.05 }, ytd: '18.05%', status: 'fail', desc: '9月50/277' },
-      { name: '故障率(仪器) 800P', target: '参照历史水平', months: { '9月': 22.61 }, ytd: '22.61%', status: 'fail', desc: '9月64/283；附件标识缺少800P数据，需确认' },
+      { name: '故障率(仪器) 800P', target: '参照历史水平', months: { '9月': 22.61 }, ytd: '22.61%', status: 'fail', desc: '9月64/283' },
       { name: '故障率(仪器) 药敏', target: '参照历史水平', months: { '9月': 5.53 }, ytd: '5.53%', status: 'warning', desc: '9月11/199' }
     ]
   };
@@ -326,7 +331,7 @@ function addDataIssueSection(module) {
 function applyToModules(input) {
   var data = base.applyToModules(input);
   data.updated = '2026-09';
-  data.dataSource = 'FDQH_quality_indicators_2026-10-15-少800P数据.xlsx';
+  data.dataSource = 'FDQH_quality_indicators_2026-10-15.xlsx';
   data.dataQualityNotes = dataIssues.slice();
 
   var qms = findModule(data, 'qms');
@@ -359,8 +364,8 @@ function applyToModules(input) {
   }
 
   if (rd) {
-    updateTableRow(rd, '新产品导入质量 (DOA/FFR)', 'DOA到货缺陷率', 0, 0, '8.5%', 'fail', '9月0%；800P数据仍需确认');
-    updateTableRow(rd, '新产品导入质量 (DOA/FFR)', 'FFR月度维修率', 8.5, null, '8.0%', 'warning', '9月缺少800P/药敏仪完整FFR');
+    updateTableRow(rd, '新产品导入质量 (DOA/FFR)', 'DOA到货缺陷率', 0, 7.7, '8.5%', 'fail', '9月7.7%');
+    updateTableRow(rd, '新产品导入质量 (DOA/FFR)', 'FFR月度维修率', 8.5, 7.9, '8.0%', 'warning', '9月7.9%');
   }
 
   if (supply) {
@@ -415,7 +420,7 @@ function applyToModules(input) {
     updateTableRow(pms, '试剂市场缺陷率 (月度)', '发光条线', 3.4, 7.3, '4.9%', 'fail', '9月7.3%');
     updateTableRow(pms, '试剂市场缺陷率 (月度)', '生化条线', 1.3, 4.0, '1.0%', 'fail', '9月4.0%');
     updateTableRow(pms, '试剂市场缺陷率 (月度)', '分子条线', 20.0, 36.4, '6.3%', 'fail', '9月36.4%');
-    updateTableRow(pms, '仪器上市后质量 (月度)', '仪器总FFR', 9.2, null, '8.3%', 'fail', '9月缺少800P完整数据');
+    updateTableRow(pms, '仪器上市后质量 (月度)', '仪器总FFR', 9.2, 7.5, '8.3%', 'fail', '9月7.5%');
     updateTableRow(pms, '仪器上市后质量 (月度)', '仪器到货缺陷率(DOA)', 0, 7.1, '8.1%', 'fail', '9月7.1%');
     updateTableRow(pms, '仪器上市后质量 (月度)', 'DOA到货缺陷率（1000、3000）', 0, 0, '8.5%', 'fail', '9月0%');
     updateTableRow(pms, '仪器上市后质量 (月度)', 'FFR月度维修率（1000、3000）', 10.1, 7.0, '8.0%', 'warning', '9月7.0%');
@@ -447,7 +452,7 @@ function applyToKpis(data) {
 module.exports = {
   month: '9月',
   months: MONTHS,
-  sourceFile: 'FDQH_quality_indicators_2026-10-15-少800P数据.xlsx',
+  sourceFile: 'FDQH_quality_indicators_2026-10-15.xlsx',
   complaintSummary: complaintSummary,
   kpis: kpis,
   capaSummary: base.capaSummary,
