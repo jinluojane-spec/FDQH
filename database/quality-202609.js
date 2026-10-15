@@ -6,13 +6,13 @@ var base = require('./quality-202608');
 var MONTHS = ['8月', '9月'];
 
 var complaintSummary = {
-  total: 671,
+  total: 740,
   period: '2026年1-9月',
-  sourceFile: 'FDQH_quality_indicators_2026-10-15-少800P数据.xlsx',
+  sourceFile: 'FDQH_quality_indicators_2026-10-15.xlsx',
   detailTotal: 590,
   detailReagent: 120,
   detailInstrument: 470,
-  missingDetail: 81,
+  missingDetail: 150,
   augustSummary: 48,
   augustDetail: 25,
   septemberSummary: 58,
@@ -21,22 +21,22 @@ var complaintSummary = {
   repeatComplaintsDetailBased: 20,
   repeatComplaintsReported: 18,
   byMonth: { '1月': 126, '2月': 66, '3月': 66, '4月': 66, '5月': 70, '6月': 65, '7月': 106, '8月': 48, '9月': 58 },
-  byLine: { '仪器': 527, '微生物': 48, '发光': 47, '生化': 27, '荧光PCR': 18, 'POCT': 4 },
+  byLine: { '仪器': 596, '微生物': 47, '发光': 32, '生化': 24, '荧光PCR': 9, 'POCT': 4 },
   augustByLine: { '试剂': 10, '仪器': 38 },
   septemberByLine: { '试剂': 24, '仪器': 34 }
 };
 
 var kpis = Object.assign({}, base.kpis, {
-  doaOverallYTD: 8.1,
+  doaOverallYTD: 8.7,
   doaNewYTD: 8.5,
-  doaMassYTD: 8.5,
+  doaMassYTD: 9.1,
   ffrOverallYTD: 8.3,
   ffrNewYTD: 8.0,
-  ffrMassYTD: 8.0,
-  reagentDefectOverallYTD: 2.4,
-  reagentDefectCLIA: 4.9,
-  reagentDefectBio: 1.0,
-  reagentDefectMol: 6.3,
+  ffrMassYTD: 8.4,
+  reagentDefectOverallYTD: 2.9,
+  reagentDefectCLIA: 5.2,
+  reagentDefectBio: 1.3,
+  reagentDefectMol: 10.0,
   pkgPassRate: 99.3,
   rawReagentPassRate: 99.5,
   rawInstrumentPassRate: 99.4,
@@ -53,7 +53,7 @@ var kpis = Object.assign({}, base.kpis, {
 
 var dataIssues = [
   '9月EQA单元格同时写有“18/18”和“90”，如18项全部合格，正确值应为100%，需确认源表笔误。',
-  '客诉汇总总数按671件、仪器527件统计，但非仪器条线合计144件，与“客诉总数（试剂）120件”不一致。',
+  '修正后客诉总数740件、仪器596件、试剂144件；分线微生物47、发光32、生化24、荧光PCR9、POCT4，试剂分线合计116件，与144件相差28件。',
   'CAPA YTD写为总数45、已关闭45、处理中0，但9月又写总数11、已关闭5、处理中6，汇总与月度明细无法直接勾稽。',
   '“指标总览（YTD)”仍多处引用7月说明和旧值，不能作为9月汇总口径，应以各模块9月列及客诉汇总表为准。',
   '8月原料检验合格率（仪器）已按明细修正为99%；此前部分页面显示100%属于口径错误。'
@@ -143,7 +143,7 @@ function applyToBowling(input) {
   var strategic = data.strategic || [];
   var doa = strategic.find(function(row) { return row.id === '8'; });
   if (doa) {
-    doa.ytd = 8.1;
+    doa.ytd = 8.7;
     setMonthObject(doa.months, '8月', { plan: 8, actual: 0, status: 'pass' });
     setMonthObject(doa.months, '9月', { plan: 8, actual: 7.1, status: lowerIsBetterStatus(7.1, 8) });
     if (doa.drilldown && doa.drilldown[0]) {
@@ -152,7 +152,7 @@ function applyToBowling(input) {
       setMonthValue(doa.drilldown[0].months, '9月', 0);
     }
     if (doa.drilldown && doa.drilldown[1]) {
-      doa.drilldown[1].ytd = 8.5;
+      doa.drilldown[1].ytd = 9.1;
       setMonthValue(doa.drilldown[1].months, '8月', 0);
       setMonthValue(doa.drilldown[1].months, '9月', 0);
     }
@@ -169,7 +169,7 @@ function applyToBowling(input) {
       setMonthValue(ffr.drilldown[0].months, '9月', 7.9);
     }
     if (ffr.drilldown && ffr.drilldown[1]) {
-      ffr.drilldown[1].ytd = 8.0;
+      ffr.drilldown[1].ytd = 8.4;
       setMonthValue(ffr.drilldown[1].months, '8月', 10.1);
       setMonthValue(ffr.drilldown[1].months, '9月', 7.0);
     }
@@ -177,7 +177,7 @@ function applyToBowling(input) {
 
   var defect = strategic.find(function(row) { return row.id === '10'; });
   if (defect) {
-    defect.ytd = 2.4;
+    defect.ytd = 2.9;
     setMonthObject(defect.months, '8月', { plan: 2.5, actual: 3.4, status: lowerIsBetterStatus(3.4, 2.5) });
     setMonthObject(defect.months, '9月', { plan: 2.5, actual: 7.3, status: lowerIsBetterStatus(7.3, 2.5) });
     var defectValues = [
@@ -238,16 +238,16 @@ function applyToProduction(input) {
   });
 
   var strategic = sections.find(function(section) { return section.title && section.title.indexOf('战略解码') === 0; });
-  updateProductionMetric(strategic, 'DOA', 0, 7.1, '8.1%', 'fail');
+  updateProductionMetric(strategic, 'DOA', 0, 7.1, '8.7%', 'fail');
   updateProductionMetric(strategic, 'DOA-N', 0, 7.7, '8.5%', 'fail');
-  updateProductionMetric(strategic, 'DOA-M', 0, 0, '8.5%', 'fail');
+  updateProductionMetric(strategic, 'DOA-M', 0, 0, '9.1%', 'fail');
   updateProductionMetric(strategic, 'FFR', 9.2, 7.5, '8.3%', 'fail');
   updateProductionMetric(strategic, 'FFR-N', 8.5, 7.9, '8.0%', 'warning');
-  updateProductionMetric(strategic, 'FFR-M', 10.1, 7.0, '8.0%', 'warning');
-  updateProductionMetric(strategic, 'DEFECT', 3.4, 7.3, '2.4%', 'fail');
-  updateProductionMetric(strategic, 'DEF-CLIA', 3.4, 7.3, '4.9%', 'fail');
-  updateProductionMetric(strategic, 'DEF-BIO', 1.3, 4.0, '1.0%', 'fail');
-  updateProductionMetric(strategic, 'DEF-MOL', 20.0, 36.4, '6.3%', 'fail');
+  updateProductionMetric(strategic, 'FFR-M', 10.1, 7.0, '8.4%', 'warning');
+  updateProductionMetric(strategic, 'DEFECT', 3.4, 7.3, '2.9%', 'fail');
+  updateProductionMetric(strategic, 'DEF-CLIA', 3.4, 7.3, '5.2%', 'fail');
+  updateProductionMetric(strategic, 'DEF-BIO', 1.3, 4.0, '1.3%', 'fail');
+  updateProductionMetric(strategic, 'DEF-MOL', 20.0, 36.4, '10.0%', 'fail');
 
   var daily = sections.find(function(section) { return section.title && section.title.indexOf('日常检验') === 0; });
   var dailyValues = [
@@ -266,14 +266,14 @@ function applyToProduction(input) {
 
   var complaint = sections.find(function(section) { return section.title && section.title.indexOf('客诉分析') === 0; });
   if (complaint) {
-    complaint.title = '客诉分析 · 2026年1-9月 (共671件)';
+    complaint.title = '客诉分析 · 2026年1-9月 (共740件)';
     complaint.byMonth = complaintSummary.byMonth;
     complaint.byLine = [
-      { name: '仪器', count: 527, color: '#0EA5E9', risk: '9月34件' },
-      { name: '微生物', count: 48, color: '#10B981', risk: '9月7件' },
-      { name: '发光', count: 47, color: '#3B82F6', risk: '9月3件' },
-      { name: '生化', count: 27, color: '#F59E0B', risk: '9月4件' },
-      { name: '荧光PCR', count: 18, color: '#8B5CF6', risk: '9月4件' },
+      { name: '仪器', count: 596, color: '#0EA5E9', risk: '9月34件' },
+      { name: '微生物', count: 47, color: '#10B981', risk: '9月7件' },
+      { name: '发光', count: 32, color: '#3B82F6', risk: '9月3件' },
+      { name: '生化', count: 24, color: '#F59E0B', risk: '9月4件' },
+      { name: '荧光PCR', count: 9, color: '#8B5CF6', risk: '9月4件' },
       { name: 'POCT', count: 4, color: '#EC4899', risk: '9月0件' }
     ];
   }
@@ -416,24 +416,24 @@ function applyToModules(input) {
   }
 
   if (pms) {
-    updateSummary(pms, '客诉总数', { label: '客诉总数(1-9月)', value: complaintSummary.total + '件', target: '≤50件/半年', status: 'warning', desc: '9月58件，试剂24 / 仪器34；重复投诉20件' });
-    updateSummary(pms, '试剂市场缺陷率', { value: '7.3%', target: '≤2.5%', status: 'fail', desc: '9月7.3%，YTD 2.4%' });
+    updateSummary(pms, '客诉总数', { label: '客诉总数(1-9月)', value: complaintSummary.total + '件', target: '≤50件/半年', status: 'warning', desc: 'YTD仪器596件、试剂144件；9月58件' });
+    updateSummary(pms, '试剂市场缺陷率', { value: '2.9%', target: '≤2.5%', status: 'fail', desc: 'YTD 2.9%，9月7.3%' });
     updateSummary(pms, 'EQA合格率', { value: '100%', target: '100%', status: 'pass', desc: '9月18/18；源表数值90疑似错误' });
-    updateSummary(pms, '到货缺陷率DOA', { value: '7.1%', target: '≤5%(新标)', status: 'fail', desc: '9月7.1%，YTD 8.1%' });
+    updateSummary(pms, '到货缺陷率DOA', { value: '8.7%', target: '≤5%(新标)', status: 'fail', desc: 'YTD 8.7%，9月7.1%' });
     updateTableRow(pms, '考核指标 (KPI)', '室间质评EQA合格率', '10/11 90', '18/18 100', '100%', 'pass', '9月18/18；源表数值栏写90');
-    updateTableRow(pms, '试剂市场缺陷率 (月度)', 'Overall缺陷率', 3.4, 7.3, '2.4%', 'fail', '9月7.3%');
-    updateTableRow(pms, '试剂市场缺陷率 (月度)', '发光条线', 3.4, 7.3, '4.9%', 'fail', '9月7.3%');
-    updateTableRow(pms, '试剂市场缺陷率 (月度)', '生化条线', 1.3, 4.0, '1.0%', 'fail', '9月4.0%');
-    updateTableRow(pms, '试剂市场缺陷率 (月度)', '分子条线', 20.0, 36.4, '6.3%', 'fail', '9月36.4%');
+    updateTableRow(pms, '试剂市场缺陷率 (月度)', 'Overall缺陷率', 3.4, 7.3, '2.9%', 'fail', 'YTD 2.9%，9月7.3%');
+    updateTableRow(pms, '试剂市场缺陷率 (月度)', '发光条线', 3.4, 7.3, '5.2%', 'fail', 'YTD 5.2%，9月7.3%');
+    updateTableRow(pms, '试剂市场缺陷率 (月度)', '生化条线', 1.3, 4.0, '1.3%', 'fail', 'YTD 1.3%，9月4.0%');
+    updateTableRow(pms, '试剂市场缺陷率 (月度)', '分子条线', 20.0, 36.4, '10.0%', 'fail', 'YTD 10.0%，9月36.4%');
     updateTableRow(pms, '仪器上市后质量 (月度)', '仪器总FFR', 9.2, 7.5, '8.3%', 'fail', '9月7.5%');
-    updateTableRow(pms, '仪器上市后质量 (月度)', '仪器到货缺陷率(DOA)', 0, 7.1, '8.1%', 'fail', '9月7.1%');
-    updateTableRow(pms, '仪器上市后质量 (月度)', 'DOA到货缺陷率（1000、3000）', 0, 0, '8.5%', 'fail', '9月0%');
-    updateTableRow(pms, '仪器上市后质量 (月度)', 'FFR月度维修率（1000、3000）', 10.1, 7.0, '8.0%', 'warning', '9月7.0%');
-    updateTableRow(pms, '客诉月度趋势', '客诉总数（试剂）', 10, 24, '120件', 'warning', '9月24件；与条线合计存在差异');
-    updateTableRow(pms, '客诉月度趋势', '发光', 2, 3, '29', 'fail', '9月3件');
-    updateTableRow(pms, '客诉月度趋势', '微生物', 2, 7, '40', 'warning', '9月7件');
-    updateTableRow(pms, '客诉月度趋势', '生化', 1, 4, '20', 'warning', '9月4件');
-    updateTableRow(pms, '客诉月度趋势', '荧光PCR', 2, 4, '5', 'warning', '9月4件');
+    updateTableRow(pms, '仪器上市后质量 (月度)', '仪器到货缺陷率(DOA)', 0, 7.1, '8.7%', 'fail', 'YTD 8.7%，9月7.1%');
+    updateTableRow(pms, '仪器上市后质量 (月度)', 'DOA到货缺陷率（1000、3000）', 0, 0, '9.1%', 'fail', 'YTD 9.1%，9月0%');
+    updateTableRow(pms, '仪器上市后质量 (月度)', 'FFR月度维修率（1000、3000）', 10.1, 7.0, '8.4%', 'warning', 'YTD 8.4%，9月7.0%');
+    updateTableRow(pms, '客诉月度趋势', '客诉总数（试剂）', 10, 24, '144件', 'warning', 'YTD 144件，9月24件；分线合计116件');
+    updateTableRow(pms, '客诉月度趋势', '发光', 2, 3, '32', 'fail', 'YTD 32件，9月3件');
+    updateTableRow(pms, '客诉月度趋势', '微生物', 2, 7, '47', 'warning', 'YTD 47件，9月7件');
+    updateTableRow(pms, '客诉月度趋势', '生化', 1, 4, '24', 'warning', 'YTD 24件，9月4件');
+    updateTableRow(pms, '客诉月度趋势', '荧光PCR', 2, 4, '9', 'warning', 'YTD 9件，9月4件');
     updateTableRow(pms, '客诉月度趋势', 'POCT', 1, 0, '4', 'pass', '9月0件');
     updateTableRow(pms, '观察指标 (Monitoring) — 客服/可靠性', '零星客户投诉率PPM（试剂）', 68, 14, '', 'info', '9月14ppm');
     updateTableRow(pms, '观察指标 (Monitoring) — 客服/可靠性', '批量客户投诉占比', '1.6%', '5.9%', '', 'warning', '9月5.9%');
