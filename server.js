@@ -2686,7 +2686,7 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
   var open = complaints.filter(function(c) { return c.status !== 'Closed'; }).length;
   var closed = complaints.filter(function(c) { return c.status === 'Closed'; }).length;
   var highRisk = complaints.filter(function(c) { return c.risk_level === 'High' || c.risk_level === 'Critical'; }).length;
-  var repeat = complaints.filter(function(c) { return c.complaint_repeat === true; }).length;
+  var repeat = quality202609.complaintSummary.repeatComplaints || complaints.filter(function(c) { return c.complaint_repeat === true; }).length;
 
   // === 月度趋势 ===
   var byMonth = {};
@@ -2852,12 +2852,15 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
       augustDetail: quality202609.complaintSummary.augustDetail,
       septemberSummary: quality202609.complaintSummary.septemberSummary,
       septemberDetail: quality202609.complaintSummary.septemberDetail,
+      repeatSummary: quality202609.complaintSummary.repeatComplaints,
+      repeatDetails: quality202609.complaintSummary.repeatComplaintsDetailBased,
       warnings: [
         '源表汇总口径为671件，但可逐条核对的明细为590件。',
         '缺少81条客诉明细，包括8月23条仪器投诉和9月58条客诉。',
         '汇总趋势和占比按671件口径展示，原因分类和产品明细按590条可用明细分析。',
         '售后111条为重点问题复盘分析，作为独立来源展示，不重复计入671件客诉总数。',
-        '9月客诉58件中试剂24件，但非仪器条线合计18件；客诉汇总表内部存在6件差异。'
+        '9月客诉58件中试剂24件，但非仪器条线合计18件；客诉汇总表内部存在6件差异。',
+        '源台账标记重复投诉20件，PPT汇报18件，相差2件；平台按源台账口径显示20件。'
       ]
     },
     aftersalesFocus: aftersalesFocus,
