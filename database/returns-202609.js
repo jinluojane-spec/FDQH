@@ -60,6 +60,70 @@ module.exports = {
     { name: '经营类', quality: 0, nonQuality: 18, total: 18, qualityRate: 0 },
     { name: 'I-SPOT', quality: 3, nonQuality: 2, total: 5, qualityRate: 60.00 }
   ],
+  septemberQualityAnalysis: {
+    total: 10,
+    topProduct: {
+      name: '类风湿因子测定试剂盒（免疫比浊法）',
+      count: 2,
+      reason: '外包装破损',
+      detail: '两个订单均因试剂盒外包装破损或客户拒收发生退换货。'
+    },
+    reasons: [
+      {
+        name: '外包装破损',
+        count: 5,
+        products: [
+          { name: '类风湿因子测定试剂盒（免疫比浊法）', category: '生化', count: 2, detail: '试剂盒破损，客户不接受；另一单外包装破损后客户拒收。' },
+          { name: '低密度脂蛋白胆固醇测定试剂盒（清除法）', category: '生化', count: 1, detail: '冷链送达后外盒挤压变形，无法出货。' },
+          { name: 'W2酸性清洗液', category: '生化', count: 1, detail: '外包装破损，客户拒收。' },
+          { name: '尿酸测定试剂盒（尿酸酶法）', category: '生化', count: 1, detail: '外包装破损，西门子无法销售并拒收。' }
+        ]
+      },
+      {
+        name: '质量问题（性能）',
+        count: 4,
+        products: [
+          { name: '糖化白蛋白测定试剂盒（酶法）', category: '生化', count: 1, detail: '在医院930仪器上无法使用。' },
+          { name: '肌酐测定试剂盒（肌氨酸氧化酶法）', category: '生化', count: 1, detail: '新试剂开封后发现R1只有半瓶，试剂量严重不足。' },
+          { name: '胃泌素17检测试剂盒（磁微粒化学发光法）', category: '化学发光', count: 1, detail: '终端反馈产品漏液。' },
+          { name: '新型冠状病毒、甲型流感病毒、乙型流感病毒抗原检测试剂盒（胶体金法）', category: '化学发光', count: 1, detail: '多次检测无质控线，或质控线颜色很浅。' }
+        ]
+      },
+      {
+        name: '质量问题（污染）',
+        count: 1,
+        products: [
+          { name: '同型半胱氨酸测定试剂盒（酶循环法）', category: '生化', count: 1, detail: '试剂打开后发现异物。' }
+        ]
+      }
+    ],
+    previousMonthTop3: [
+      {
+        name: '质量问题（性能）',
+        august: 22,
+        september: 4,
+        change: -18,
+        assessment: '改善',
+        situation: '8月主要由新冠甲乙流抗原、真菌药敏和一次性采样拭子集中退货带动；9月降至4条，且分散在4个产品。'
+      },
+      {
+        name: '漏液',
+        august: 3,
+        september: 0,
+        change: -3,
+        assessment: '改善',
+        situation: '8月为真菌药敏试剂盒2条、碱性磷酸酶试剂1条；9月未发生同类漏液质量问题。'
+      },
+      {
+        name: '外包装破损',
+        august: 2,
+        september: 5,
+        change: 3,
+        assessment: '恶化',
+        situation: '9月升至首位，主要由类风湿因子试剂2条及其余3个产品各1条构成，需重点检查冷链运输和成品包装防护。'
+      }
+    ]
+  },
   insights: [
     '1-9月整合清单共606条，其中质量问题102条、非质量问题504条。',
     '9月退换货49条，其中质量问题10条、非质量问题39条，质量问题占比20.41%。',
@@ -68,6 +132,8 @@ module.exports = {
     '9月非质量问题以客户调剂或改发票15条、订错货12条和业务原因7条为主。',
     '1-9月质量问题主要集中在性能问题54条、外包装破损31条和漏液12条。',
     '统计覆盖154个唯一订单号；其中质量问题涉及69个订单，非质量问题涉及68个订单。',
-    '流程状态包含归档426条、未归档171条、未填写9条，看板按全部台账记录统计。'
+    '流程状态包含归档426条、未归档171条、未填写9条，看板按全部台账记录统计。',
+    '9月Top3质量原因为外包装破损5条、性能问题4条、污染1条；最高单品为类风湿因子试剂2条。',
+    '8月Top3质量问题在9月的变化为：性能问题22条降至4条，漏液3条降至0条，外包装破损2条升至5条。'
   ]
 };
