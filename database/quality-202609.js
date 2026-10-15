@@ -117,7 +117,9 @@ function normalizeMonthTableHeaders(section) {
 }
 
 function updateSummary(module, label, patch) {
-  var item = module && (module.summary || []).find(function(row) { return row.label === label; });
+  var item = module && (module.summary || []).find(function(row) {
+    return row.label === label || (row.label && row.label.indexOf(label) === 0);
+  });
   if (item) Object.assign(item, patch);
 }
 
@@ -414,7 +416,7 @@ function applyToModules(input) {
   }
 
   if (pms) {
-    updateSummary(pms, '客诉总数', { value: complaintSummary.total + '件', target: '≤50件/半年', status: 'warning', desc: '9月58件，试剂24 / 仪器34' });
+    updateSummary(pms, '客诉总数', { label: '客诉总数(1-9月)', value: complaintSummary.total + '件', target: '≤50件/半年', status: 'warning', desc: '9月58件，试剂24 / 仪器34；重复投诉20件' });
     updateSummary(pms, '试剂市场缺陷率', { value: '7.3%', target: '≤2.5%', status: 'fail', desc: '9月7.3%，YTD 2.4%' });
     updateSummary(pms, 'EQA合格率', { value: '100%', target: '100%', status: 'pass', desc: '9月18/18；源表数值90疑似错误' });
     updateSummary(pms, '到货缺陷率DOA', { value: '7.1%', target: '≤5%(新标)', status: 'fail', desc: '9月7.1%，YTD 8.1%' });
