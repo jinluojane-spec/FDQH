@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database
 const db = require('./database/init');
-const quality202608 = require('./database/quality-202608');
+const quality202609 = require('./database/quality-202609');
 const returns202609 = require('./database/returns-202609');
 
 // AI Service
@@ -1946,7 +1946,7 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
     complaintCountYTD: 108,     // 1-7月客诉总计 108件
     complaintsByLine: { '发光': 38, '生化': 21, '微生物': 38, '荧光PCR': 10, 'POCT': 3 },
   };
-  Object.assign(BOWLING, quality202608.kpis);
+  Object.assign(BOWLING, quality202609.kpis);
 
   var kpis = {
     // 🔴 红线类 — 一票否决指标 (参照TQM指标确认.xlsx)
@@ -1961,7 +1961,7 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
     ],
     // 📊 经营类 — 稳定运行指标 (参照TQM: CAPA/客诉闭环/成品合格/EQA)
     operations: [
-      { name: 'CAPA按期关闭率', value: quality202608.capaSummary.onTimeRate, target: 95, unit: '%', status: quality202608.capaSummary.onTimeRate >= 95 ? 'pass' : 'warning', source: 'CAPA措施按时完成率 月≥65% 年≥95%' },
+      { name: 'CAPA按期关闭率', value: quality202609.capaSummary.onTimeRate, target: 95, unit: '%', status: quality202609.capaSummary.onTimeRate >= 95 ? 'pass' : 'warning', source: 'CAPA措施按时完成率 月≥65% 年≥95%' },
       { name: '客户投诉闭环率', value: complaints.length > 0 ? Math.round(closedComplaints.length / complaints.length * 100) : 100, target: 95, unit: '%', status: complaints.length > 0 && closedComplaints.length / complaints.length >= 0.95 ? 'pass' : 'warning', source: '按时闭环投诉/总投诉' },
       { name: '成品一次合格率', value: BOWLING.finalReagentPassRate, target: 99, unit: '%', status: BOWLING.finalReagentPassRate >= 99 ? 'pass' : 'warning', source: '成品检验(试剂)YTD' },
       { name: '仪器维修率(FFR)', value: BOWLING.ffrOverallYTD, target: 8, unit: '%', status: BOWLING.ffrOverallYTD <= 8 ? 'pass' : 'warning', source: 'Overall FFR YTD' },
@@ -2063,7 +2063,7 @@ app.get('/api/dashboard/bowling-chart', requireAuth, asyncHandler(async (req, re
     ]
   };
 
-  res.json(quality202608.applyToBowling({ strategic: strategic, daily: daily, complaintStats: complaintStats, updated: '2026-08' }));
+  res.json(quality202609.applyToBowling({ strategic: strategic, daily: daily, complaintStats: complaintStats, updated: '2026-09' }));
 }));
 
 // ============================================================
@@ -2207,7 +2207,7 @@ app.get('/api/dashboard/production-quality', requireAuth, asyncHandler(async (re
     ]
   };
 
-  res.json(quality202608.applyToProduction({
+  res.json(quality202609.applyToProduction({
     sections: [strategicKPIs, dailyMetrics, instrumentMetrics, systemMetrics, complaintSection],
     updated: '2026-08',
     dataSource: '质量管理保龄球图-2026(2).xlsx'
@@ -2546,7 +2546,7 @@ app.get('/api/dashboard/quality-modules', requireAuth, asyncHandler(async (req, 
   var events = await db.findAll('quality_events');
   var capas = await db.findAll('capa_records');
   var suppliers = await db.findAll('suppliers');
-  res.json(quality202608.applyToModules(await buildQualityModules(events, capas, suppliers)));
+  res.json(quality202609.applyToModules(await buildQualityModules(events, capas, suppliers)));
 }));
 
 // ============================================================
@@ -2556,7 +2556,7 @@ app.get('/api/dashboard/export/indicators', requireAuth, asyncHandler(async (req
   var events = await db.findAll('quality_events');
   var capas = await db.findAll('capa_records');
   var suppliers = await db.findAll('suppliers');
-  var qm = quality202608.applyToModules(await buildQualityModules(events, capas, suppliers));
+  var qm = quality202609.applyToModules(await buildQualityModules(events, capas, suppliers));
 
   function str(v) { return v === null || v === undefined ? '' : String(v); }
   function num(v) { return typeof v === 'number' ? v : str(v); }
@@ -2682,7 +2682,7 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
   }
 
   // === KPI ===
-  var total = quality202608.complaintSummary.total;
+  var total = quality202609.complaintSummary.total;
   var open = complaints.filter(function(c) { return c.status !== 'Closed'; }).length;
   var closed = complaints.filter(function(c) { return c.status === 'Closed'; }).length;
   var highRisk = complaints.filter(function(c) { return c.risk_level === 'High' || c.risk_level === 'Critical'; }).length;
@@ -2690,12 +2690,12 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
 
   // === 月度趋势 ===
   var byMonth = {};
-  Object.keys(quality202608.complaintSummary.byMonth).forEach(function(key) {
-    byMonth[parseInt(key, 10)] = quality202608.complaintSummary.byMonth[key];
+  Object.keys(quality202609.complaintSummary.byMonth).forEach(function(key) {
+    byMonth[parseInt(key, 10)] = quality202609.complaintSummary.byMonth[key];
   });
 
   // === 产品线分布 ===
-  var bySource = Object.assign({}, quality202608.complaintSummary.byLine);
+  var bySource = Object.assign({}, quality202609.complaintSummary.byLine);
 
   // === 原因分类 (从描述提取) ===
   var byCause = {};
@@ -2843,18 +2843,21 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
     reagentLineDesign: reagentLineDesign,
     reagentTop10: reagentTop10,
     dataQuality: {
-      summaryTotal: quality202608.complaintSummary.total,
-      detailTotal: quality202608.complaintSummary.detailTotal,
-      missingDetail: quality202608.complaintSummary.missingDetail,
-      reagentDetails: quality202608.complaintSummary.detailReagent,
-      instrumentDetails: quality202608.complaintSummary.detailInstrument,
-      augustSummary: quality202608.complaintSummary.augustSummary,
-      augustDetail: quality202608.complaintSummary.augustDetail,
+      summaryTotal: quality202609.complaintSummary.total,
+      detailTotal: quality202609.complaintSummary.detailTotal,
+      missingDetail: quality202609.complaintSummary.missingDetail,
+      reagentDetails: quality202609.complaintSummary.detailReagent,
+      instrumentDetails: quality202609.complaintSummary.detailInstrument,
+      augustSummary: quality202609.complaintSummary.augustSummary,
+      augustDetail: quality202609.complaintSummary.augustDetail,
+      septemberSummary: quality202609.complaintSummary.septemberSummary,
+      septemberDetail: quality202609.complaintSummary.septemberDetail,
       warnings: [
-        '源表汇总口径为613件，但可逐条核对的明细为590件。',
-        '缺少23条仪器投诉明细，主要集中在2026年8月。',
-        '汇总趋势和占比按613件口径展示，原因分类和产品明细按590条可用明细分析。',
-        '售后111条为重点问题复盘分析，作为独立来源展示，不重复计入613件客诉总数。'
+        '源表汇总口径为671件，但可逐条核对的明细为590件。',
+        '缺少81条客诉明细，包括8月23条仪器投诉和9月58条客诉。',
+        '汇总趋势和占比按671件口径展示，原因分类和产品明细按590条可用明细分析。',
+        '售后111条为重点问题复盘分析，作为独立来源展示，不重复计入671件客诉总数。',
+        '9月客诉58件中试剂24件，但非仪器条线合计18件；客诉汇总表内部存在6件差异。'
       ]
     },
     aftersalesFocus: aftersalesFocus,
@@ -3622,7 +3625,7 @@ async function buildRiskPredictionContext() {
   }).sort(function(a, b) { return (b.risk_score || 0) - (a.risk_score || 0); }).slice(0, 10);
 
   return {
-    dataAsOf: '2026-09-14',
+    dataAsOf: '2026-10-15',
     dataBasis: 'FDQH当前质量事件库、CAPA库、供应商数据、2026年8月质量指标和退换货汇总',
     summary: {
       totalEvents: events.length,
@@ -3643,8 +3646,8 @@ async function buildRiskPredictionContext() {
     topRiskProducts: topRiskProducts,
     recentSignals: recentSignals,
     topSupplierRisks: supplierRisk,
-    qualityIndicators: quality202608.kpis,
-    complaints: quality202608.complaintSummary,
+    qualityIndicators: quality202609.kpis,
+    complaints: quality202609.complaintSummary,
     returns: returns202609.summary,
     dataNotes: [
       '事件数据来自2026年体系考核、内审及供应商审核不合格项汇总。',
