@@ -2,7 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 
-const inputPath = process.argv[2];
+function findWorkbook(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      const found = findWorkbook(fullPath);
+      if (found) return found;
+    } else if (entry.name === '2026 体系考核、内审及供应商审核不合格项汇总.xlsx') {
+      return fullPath;
+    }
+  }
+  return null;
+}
+
+const inputPath = process.argv[2] || findWorkbook('C:/Users/13611/Desktop');
 if (!inputPath) {
   console.error('Usage: node scripts/import-audit-findings.js <workbook.xlsx>');
   process.exit(1);
