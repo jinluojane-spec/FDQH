@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database
 const db = require('./database/init');
-const quality202609 = require('./database/quality-202609');
+const quality202610 = require('./database/quality-202610');
 const returns202609 = require('./database/returns-202609');
 
 // AI Service
@@ -1946,7 +1946,7 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
     complaintCountYTD: 108,     // 1-7月客诉总计 108件
     complaintsByLine: { '发光': 38, '生化': 21, '微生物': 38, '荧光PCR': 10, 'POCT': 3 },
   };
-  Object.assign(BOWLING, quality202609.kpis);
+  Object.assign(BOWLING, quality202610.kpis);
 
   var kpis = {
     // 🔴 红线类 — 一票否决指标 (参照TQM指标确认.xlsx)
@@ -1961,7 +1961,7 @@ app.get('/api/dashboard/kpis', requireAuth, asyncHandler(async (req, res) => {
     ],
     // 📊 经营类 — 稳定运行指标 (参照TQM: CAPA/客诉闭环/成品合格/EQA)
     operations: [
-      { name: 'CAPA按期关闭率', value: quality202609.capaSummary.onTimeRate, target: 95, unit: '%', status: quality202609.capaSummary.onTimeRate >= 95 ? 'pass' : 'warning', source: 'CAPA措施按时完成率 月≥65% 年≥95%' },
+      { name: 'CAPA按期关闭率', value: quality202610.capaSummary.onTimeRate, target: 95, unit: '%', status: quality202610.capaSummary.onTimeRate >= 95 ? 'pass' : 'warning', source: 'CAPA措施按时完成率 月≥65% 年≥95%' },
       { name: '客户投诉闭环率', value: complaints.length > 0 ? Math.round(closedComplaints.length / complaints.length * 100) : 100, target: 95, unit: '%', status: complaints.length > 0 && closedComplaints.length / complaints.length >= 0.95 ? 'pass' : 'warning', source: '按时闭环投诉/总投诉' },
       { name: '成品一次合格率', value: BOWLING.finalReagentPassRate, target: 99, unit: '%', status: BOWLING.finalReagentPassRate >= 99 ? 'pass' : 'warning', source: '成品检验(试剂)YTD' },
       { name: '仪器维修率(FFR)', value: BOWLING.ffrOverallYTD, target: 8, unit: '%', status: BOWLING.ffrOverallYTD <= 8 ? 'pass' : 'warning', source: 'Overall FFR YTD' },
@@ -2063,7 +2063,7 @@ app.get('/api/dashboard/bowling-chart', requireAuth, asyncHandler(async (req, re
     ]
   };
 
-  res.json(quality202609.applyToBowling({ strategic: strategic, daily: daily, complaintStats: complaintStats, updated: '2026-09' }));
+  res.json(quality202610.applyToBowling({ strategic: strategic, daily: daily, complaintStats: complaintStats, updated: '2026-10' }));
 }));
 
 // ============================================================
@@ -2207,7 +2207,7 @@ app.get('/api/dashboard/production-quality', requireAuth, asyncHandler(async (re
     ]
   };
 
-  res.json(quality202609.applyToProduction({
+  res.json(quality202610.applyToProduction({
     sections: [strategicKPIs, dailyMetrics, instrumentMetrics, systemMetrics, complaintSection],
     updated: '2026-08',
     dataSource: '质量管理保龄球图-2026(2).xlsx'
@@ -2546,7 +2546,7 @@ app.get('/api/dashboard/quality-modules', requireAuth, asyncHandler(async (req, 
   var events = await db.findAll('quality_events');
   var capas = await db.findAll('capa_records');
   var suppliers = await db.findAll('suppliers');
-  res.json(quality202609.applyToModules(await buildQualityModules(events, capas, suppliers)));
+  res.json(quality202610.applyToModules(await buildQualityModules(events, capas, suppliers)));
 }));
 
 // ============================================================
@@ -2556,7 +2556,7 @@ app.get('/api/dashboard/export/indicators', requireAuth, asyncHandler(async (req
   var events = await db.findAll('quality_events');
   var capas = await db.findAll('capa_records');
   var suppliers = await db.findAll('suppliers');
-  var qm = quality202609.applyToModules(await buildQualityModules(events, capas, suppliers));
+  var qm = quality202610.applyToModules(await buildQualityModules(events, capas, suppliers));
 
   function str(v) { return v === null || v === undefined ? '' : String(v); }
   function num(v) { return typeof v === 'number' ? v : str(v); }
@@ -2682,20 +2682,20 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
   }
 
   // === KPI ===
-  var total = quality202609.complaintSummary.total;
+  var total = quality202610.complaintSummary.total;
   var open = complaints.filter(function(c) { return c.status !== 'Closed'; }).length;
   var closed = complaints.filter(function(c) { return c.status === 'Closed'; }).length;
   var highRisk = complaints.filter(function(c) { return c.risk_level === 'High' || c.risk_level === 'Critical'; }).length;
-  var repeat = quality202609.complaintSummary.repeatComplaints || complaints.filter(function(c) { return c.complaint_repeat === true; }).length;
+  var repeat = quality202610.complaintSummary.repeatComplaints || complaints.filter(function(c) { return c.complaint_repeat === true; }).length;
 
   // === 月度趋势 ===
   var byMonth = {};
-  Object.keys(quality202609.complaintSummary.byMonth).forEach(function(key) {
-    byMonth[parseInt(key, 10)] = quality202609.complaintSummary.byMonth[key];
+  Object.keys(quality202610.complaintSummary.byMonth).forEach(function(key) {
+    byMonth[parseInt(key, 10)] = quality202610.complaintSummary.byMonth[key];
   });
 
   // === 产品线分布 ===
-  var bySource = Object.assign({}, quality202609.complaintSummary.byLine);
+  var bySource = Object.assign({}, quality202610.complaintSummary.byLine);
 
   // === 原因分类 (从描述提取) ===
   var byCause = {};
@@ -2843,23 +2843,23 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
     reagentLineDesign: reagentLineDesign,
     reagentTop10: reagentTop10,
     dataQuality: {
-      summaryTotal: quality202609.complaintSummary.total,
-      detailTotal: quality202609.complaintSummary.detailTotal,
-      missingDetail: quality202609.complaintSummary.missingDetail,
-      reagentDetails: quality202609.complaintSummary.detailReagent,
-      instrumentDetails: quality202609.complaintSummary.detailInstrument,
-      augustSummary: quality202609.complaintSummary.augustSummary,
-      augustDetail: quality202609.complaintSummary.augustDetail,
-      septemberSummary: quality202609.complaintSummary.septemberSummary,
-      septemberDetail: quality202609.complaintSummary.septemberDetail,
-      repeatSummary: quality202609.complaintSummary.repeatComplaints,
-      repeatDetails: quality202609.complaintSummary.repeatComplaintsDetailBased,
+      summaryTotal: quality202610.complaintSummary.total,
+      detailTotal: quality202610.complaintSummary.detailTotal,
+      missingDetail: quality202610.complaintSummary.missingDetail,
+      reagentDetails: quality202610.complaintSummary.detailReagent,
+      instrumentDetails: quality202610.complaintSummary.detailInstrument,
+      augustSummary: quality202610.complaintSummary.augustSummary,
+      augustDetail: quality202610.complaintSummary.augustDetail,
+      septemberSummary: quality202610.complaintSummary.septemberSummary,
+      septemberDetail: quality202610.complaintSummary.septemberDetail,
+      repeatSummary: quality202610.complaintSummary.repeatComplaints,
+      repeatDetails: quality202610.complaintSummary.repeatComplaintsDetailBased,
       warnings: [
-        '修正后客诉汇总口径为740件，但可逐条核对的明细为590件。',
-        '缺少150条客诉明细，汇总与明细之间暂不能完全勾稽。',
-        '汇总趋势和占比按740件口径展示，原因分类和产品明细按590条可用明细分析。',
-        '售后111条为重点问题复盘分析，作为独立来源展示，不重复计入740件客诉总数。',
-        '客诉总数740件、仪器596件、试剂144件；试剂分线合计116件，与144件相差28件。',
+        '10月附件客诉累计口径为839件，但可逐条核对的明细仍为590件。',
+        '缺少249条客诉明细，汇总与明细之间暂不能完全勾稽。',
+        '汇总趋势和占比按839件累计口径展示，原因分类和产品明细按590条可用明细分析。',
+        '售后111条为重点问题复盘分析，作为独立来源展示，不重复计入839件客诉总数。',
+        '10月累计仪器672件、试剂167件；保留8-9月历史月度值，仅追加10月91件。',
         '源台账标记重复投诉20件，PPT汇报18件，相差2件；平台按源台账口径显示20件。'
       ]
     },
@@ -3649,8 +3649,8 @@ async function buildRiskPredictionContext() {
     topRiskProducts: topRiskProducts,
     recentSignals: recentSignals,
     topSupplierRisks: supplierRisk,
-    qualityIndicators: quality202609.kpis,
-    complaints: quality202609.complaintSummary,
+    qualityIndicators: quality202610.kpis,
+    complaints: quality202610.complaintSummary,
     returns: returns202609.summary,
     dataNotes: [
       '事件数据来自2026年体系考核、内审及供应商审核不合格项汇总。',
