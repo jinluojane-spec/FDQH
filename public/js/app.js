@@ -823,6 +823,11 @@ async function loadReturnsDashboard() {
   }
 
   var s = data.summary;
+  var latestMonthLabel = s.latestMonthLabel || '9月';
+  var latestMonthTotal = s.latestMonthTotal !== undefined ? s.latestMonthTotal : s.septemberTotal;
+  var latestMonthQuality = s.latestMonthQuality !== undefined ? s.latestMonthQuality : s.septemberQuality;
+  var latestMonthNonQuality = s.latestMonthNonQuality !== undefined ? s.latestMonthNonQuality : s.septemberNonQuality;
+  var latestMonthQualityRate = s.latestMonthQualityRate !== undefined ? s.latestMonthQualityRate : s.septemberQualityRate;
   var html = '';
 
   html += '<div class="module-summary">' +
@@ -830,30 +835,32 @@ async function loadReturnsDashboard() {
     '<div class="module-summary-card ms-fail"><div class="ms-value">' + s.quality + '</div><div class="ms-label">质量问题</div><div class="ms-target">占比 ' + s.qualityRate + '%</div></div>' +
     '<div class="module-summary-card ms-pass"><div class="ms-value">' + s.nonQuality + '</div><div class="ms-label">非质量问题</div><div class="ms-target">占比 ' + s.nonQualityRate + '%</div></div>' +
     '<div class="module-summary-card ms-info"><div class="ms-value">' + s.orders + '</div><div class="ms-label">涉及订单号</div><div class="ms-target">按整合台账统计</div></div>' +
-    '<div class="module-summary-card ms-warn"><div class="ms-value">' + s.septemberTotal + '</div><div class="ms-label">9月退换货</div><div class="ms-target">质量问题 ' + s.septemberQuality + ' / 非质量 ' + s.septemberNonQuality + '</div></div>' +
-    '<div class="module-summary-card ' + (s.septemberQualityRate >= 50 ? 'ms-fail' : 'ms-warn') + '"><div class="ms-value">' + s.septemberQualityRate + '%</div><div class="ms-label">9月质量问题占比</div><div class="ms-target">' + s.septemberQuality + ' / ' + s.septemberTotal + '</div></div>' +
+    '<div class="module-summary-card ms-warn"><div class="ms-value">' + latestMonthTotal + '</div><div class="ms-label">' + latestMonthLabel + '退换货</div><div class="ms-target">质量问题 ' + latestMonthQuality + ' / 非质量 ' + latestMonthNonQuality + '</div></div>' +
+    '<div class="module-summary-card ' + (latestMonthQualityRate >= 50 ? 'ms-fail' : 'ms-warn') + '"><div class="ms-value">' + latestMonthQualityRate + '%</div><div class="ms-label">' + latestMonthLabel + '质量问题占比</div><div class="ms-target">' + latestMonthQuality + ' / ' + latestMonthTotal + '</div></div>' +
     '</div>';
 
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:16px;">' +
+  html += '<div class="returns-chart-grid">' +
     '<div class="card"><div class="card-header"><h3>月度退换货趋势</h3><span style="font-size:11px;">质量问题与非质量问题堆叠</span></div><div class="card-body" style="height:300px;"><canvas id="returnsMonthChart"></canvas></div></div>' +
     '<div class="card"><div class="card-header"><h3>质量性质分布</h3><span style="font-size:11px;">共 ' + s.total + ' 条</span></div><div class="card-body" style="height:300px;"><canvas id="returnsQualityChart"></canvas></div></div>' +
     '</div>';
 
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:16px;">' +
+  html += '<div class="returns-chart-grid">' +
     '<div class="card"><div class="card-header"><h3>质量问题原因</h3><span style="font-size:11px;">共 ' + s.quality + ' 条</span></div><div class="card-body" style="height:270px;"><canvas id="returnsQualityReasonChart"></canvas></div></div>' +
     '<div class="card"><div class="card-header"><h3>非质量问题原因</h3><span style="font-size:11px;">共 ' + s.nonQuality + ' 条</span></div><div class="card-body" style="height:270px;"><canvas id="returnsNonQualityReasonChart"></canvas></div></div>' +
     '</div>';
 
   html += '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>产品类型分布</h3><span style="font-size:11px;">按质量性质拆分</span></div><div class="card-body" style="height:360px;"><canvas id="returnsProductChart"></canvas></div></div>';
 
-  if (data.septemberQualityAnalysis) {
-    var sq = data.septemberQualityAnalysis;
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:16px;">' +
-      '<div class="card"><div class="card-header"><h3>9月质量问题原因细分</h3><span style="font-size:11px;">共 ' + sq.total + ' 条</span></div><div class="card-body" style="height:300px;"><canvas id="returnsSeptQualityReasonChart"></canvas></div></div>' +
-      '<div class="card"><div class="card-header"><h3>8月Top3质量问题9月回顾</h3><span style="font-size:11px;">上月问题本月跟踪</span></div><div class="card-body" style="height:300px;"><canvas id="returnsTop3CompareChart"></canvas></div></div>' +
+  var sq = data.qualityAnalysis || data.septemberQualityAnalysis;
+  if (sq) {
+    var currentMonthLabel = sq.monthLabel || '9月';
+    var previousMonthLabel = sq.previousMonthLabel || '8月';
+    html += '<div class="returns-chart-grid">' +
+      '<div class="card"><div class="card-header"><h3>' + currentMonthLabel + '质量问题原因细分</h3><span style="font-size:11px;">共 ' + sq.total + ' 条</span></div><div class="card-body" style="height:300px;"><canvas id="returnsQualityAnalysisReasonChart"></canvas></div></div>' +
+      '<div class="card"><div class="card-header"><h3>' + previousMonthLabel + 'Top3质量问题' + currentMonthLabel + '回顾</h3><span style="font-size:11px;">上月问题本月跟踪</span></div><div class="card-body" style="height:300px;"><canvas id="returnsTop3CompareChart"></canvas></div></div>' +
       '</div>';
 
-    html += '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>9月Top3质量原因产品及原因</h3><span style="font-size:11px;">最高单品：' + sq.topProduct.name + ' ' + sq.topProduct.count + ' 条</span></div>' +
+    html += '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>' + currentMonthLabel + '质量原因产品及明细</h3><span style="font-size:11px;">最高单品：' + sq.topProduct.name + ' ' + sq.topProduct.count + ' 条</span></div>' +
       '<div class="card-body no-padding" style="overflow-x:auto;"><table class="data-table"><thead><tr><th>质量原因</th><th>产品</th><th>产品线</th><th>条数</th><th>具体原因</th></tr></thead><tbody>';
     sq.reasons.forEach(function(reasonGroup) {
       reasonGroup.products.forEach(function(product) {
@@ -862,12 +869,14 @@ async function loadReturnsDashboard() {
     });
     html += '</tbody></table></div></div>';
 
-    html += '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>上月Top3质量问题本月情况</h3><span style="font-size:11px;">8月与9月数量对比</span></div>' +
-      '<div class="card-body no-padding" style="overflow-x:auto;"><table class="data-table"><thead><tr><th>8月Top3问题</th><th>8月条数</th><th>9月条数</th><th>变化</th><th>本月情况</th></tr></thead><tbody>';
+    html += '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>上月Top3质量问题本月情况</h3><span style="font-size:11px;">' + previousMonthLabel + '与' + currentMonthLabel + '数量对比</span></div>' +
+      '<div class="card-body no-padding" style="overflow-x:auto;"><table class="data-table"><thead><tr><th>' + previousMonthLabel + 'Top3问题</th><th>' + previousMonthLabel + '条数</th><th>' + currentMonthLabel + '条数</th><th>变化</th><th>本月情况</th></tr></thead><tbody>';
     sq.previousMonthTop3.forEach(function(item) {
       var changeText = item.change > 0 ? '+' + item.change : String(item.change);
       var badgeClass = item.assessment === '恶化' ? 'badge-danger' : item.assessment === '改善' ? 'badge-success' : 'badge-warning';
-      html += '<tr><td><b>' + item.name + '</b></td><td>' + item.august + '</td><td>' + item.september + '</td><td><span class="badge ' + badgeClass + '">' + changeText + '</span></td><td style="text-align:left;">' + item.situation + '</td></tr>';
+      var previousCount = item.previousCount !== undefined ? item.previousCount : item.august;
+      var currentCount = item.currentCount !== undefined ? item.currentCount : item.september;
+      html += '<tr><td><b>' + item.name + '</b></td><td>' + previousCount + '</td><td>' + currentCount + '</td><td><span class="badge ' + badgeClass + '">' + changeText + '</span></td><td style="text-align:left;">' + item.situation + '</td></tr>';
     });
     html += '</tbody></table></div></div>';
   }
@@ -912,9 +921,9 @@ async function loadReturnsDashboard() {
     renderPieChart('returnsQualityReasonChart', data.qualityReasons.map(function(x) { return x.name; }), data.qualityReasons.map(function(x) { return x.count; }), ['#DC2626', '#F97316', '#F59E0B', '#FBBF24']);
     renderPieChart('returnsNonQualityReasonChart', data.nonQualityReasons.map(function(x) { return x.name; }), data.nonQualityReasons.map(function(x) { return x.count; }), ['#0EA5E9', '#22C55E', '#14B8A6', '#8B5CF6', '#6366F1', '#F59E0B', '#64748B']);
 
-    if (data.septemberQualityAnalysis) {
-      var sq = data.septemberQualityAnalysis;
-      renderPieChart('returnsSeptQualityReasonChart', sq.reasons.map(function(x) { return x.name; }), sq.reasons.map(function(x) { return x.count; }), ['#DC2626', '#F97316', '#8B5CF6']);
+    if (data.qualityAnalysis || data.septemberQualityAnalysis) {
+      var sq = data.qualityAnalysis || data.septemberQualityAnalysis;
+      renderPieChart('returnsQualityAnalysisReasonChart', sq.reasons.map(function(x) { return x.name; }), sq.reasons.map(function(x) { return x.count; }), ['#DC2626', '#F97316', '#8B5CF6']);
 
       var compareCtx = document.getElementById('returnsTop3CompareChart').getContext('2d');
       if (charts.returnsTop3Compare) charts.returnsTop3Compare.destroy();
@@ -923,8 +932,8 @@ async function loadReturnsDashboard() {
         data: {
           labels: sq.previousMonthTop3.map(function(x) { return x.name; }),
           datasets: [
-            { label: '8月', data: sq.previousMonthTop3.map(function(x) { return x.august; }), backgroundColor: '#94A3B8', borderRadius: 3 },
-            { label: '9月', data: sq.previousMonthTop3.map(function(x) { return x.september; }), backgroundColor: '#EF4444', borderRadius: 3 }
+            { label: sq.previousMonthLabel || '上月', data: sq.previousMonthTop3.map(function(x) { return x.previousCount !== undefined ? x.previousCount : x.august; }), backgroundColor: '#94A3B8', borderRadius: 3 },
+            { label: sq.monthLabel || '本月', data: sq.previousMonthTop3.map(function(x) { return x.currentCount !== undefined ? x.currentCount : x.september; }), backgroundColor: '#EF4444', borderRadius: 3 }
           ]
         },
         options: {

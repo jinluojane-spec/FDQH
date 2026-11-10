@@ -21,7 +21,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Database
 const db = require('./database/init');
 const quality202610 = require('./database/quality-202610');
-const returns202609 = require('./database/returns-202609');
+const returns202610 = require('./database/returns-202610');
 
 // AI Service
 const aiService = require('./ai');
@@ -2871,11 +2871,11 @@ app.get('/api/dashboard/complaints', requireAuth, asyncHandler(async (req, res) 
 
 // ============================================================
 // RETURNS / EXCHANGES — 退换货看板
-// 数据来源: 1-8月退换货整合清单.xlsx
+// 数据来源: 退换货申请、审批、登记单-20260805132504-台账及分析更新2026.1-10.xlsx
 // 仅提供聚合数据，不暴露客户、订单和明细记录
 // ============================================================
 app.get('/api/dashboard/returns', requireAuth, function(req, res) {
-  res.json(returns202609);
+  res.json(returns202610);
 });
 
 
@@ -3628,8 +3628,8 @@ async function buildRiskPredictionContext() {
   }).sort(function(a, b) { return (b.risk_score || 0) - (a.risk_score || 0); }).slice(0, 10);
 
   return {
-    dataAsOf: '2026-10-15',
-    dataBasis: 'FDQH当前质量事件库、CAPA库、供应商数据、2026年8月质量指标和退换货汇总',
+    dataAsOf: '2026-11-10',
+    dataBasis: 'FDQH当前质量事件库、CAPA库、供应商数据、2026年10月质量指标和2026年1-10月退换货汇总',
     summary: {
       totalEvents: events.length,
       openEvents: openEvents.length,
@@ -3651,10 +3651,10 @@ async function buildRiskPredictionContext() {
     topSupplierRisks: supplierRisk,
     qualityIndicators: quality202610.kpis,
     complaints: quality202610.complaintSummary,
-    returns: returns202609.summary,
+    returns: returns202610.summary,
     dataNotes: [
       '事件数据来自2026年体系考核、内审及供应商审核不合格项汇总。',
-      '质量指标数据以2026年8月口径为准。',
+      '质量指标数据以2026年10月口径为准，退换货数据以2026年1-10月整合台账为准。',
       '责任人姓名、客户信息和原始明细未注入模型上下文。'
     ]
   };
